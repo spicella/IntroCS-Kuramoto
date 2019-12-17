@@ -1,16 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <math.h>
+#include <complex.h>
+#include <libgen.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+
 
 //---------------Begin Definitions---------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000	 //number of Kuramoto oscillators
+	#define N 100	 //number of Kuramoto oscillators
+	
 	#define dt .001 //time step
-	#define T 1000 //simulation runtime
+	#define T 1 //simulation runtime
 
 //For fixed value of K-s in simulation
 	#define K1 1.
@@ -19,27 +29,31 @@
 	#define K0 0.
 	#define dK .02
 	#define K_max 1.5 //
+	#define PATH_MAX 1000
 //---------------End Definitions---------------//
 
 //Run bools:
 	//check values for initial configurations:
 	bool check_initial = false;
 	//Gaussian distributed frequencies [N(0,1)]
-	bool gaussian_frequencies = false;
+	bool gaussian_frequencies = true;
 	//ODE + sweeping K
 	bool sweeping_K = false;
 	//ODE + constant K-s
 
-
+const char * CreateResultsFolder();
 void PrintParams();
 float * RandUnifPhase();
 float * RandUnifFreq();
 
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
-void EulerStep(float *phase, float *frequencies, int K);
+void EulerStep(float *phase, float *frequencies, float K);
+float complex OrderParam(float *phases);
+float complex FreqOrderParam(float *ang_freqs);
 
 
+float iN=(float)(1/N);
 
 //Functions declarartion:
 
@@ -48,16 +62,26 @@ int main(void)
 	clock_t begin = clock();
 	srand(time(NULL));
 	sleep(0);
+;
+
+	//filename=strcat(filename,".csv");
+
+
+
+
+	const char* results_path = CreateResultsFolder();
+	printf("%s", results_path);
 
 	PrintParams();
 
 	//Declarations
 	int i,j,k;
-
+	float complex iN = (float)(1/N)+I*0; //inverse of N
 	float *phases;
 	float *ang_freqs;
-	float sum_phases = 0;
-	float sum_ang_freqs = 0;
+	double complex ord_param = 0 + 0 * I;
+	double freq_ord_param = 0 + 0 * I;
+	
 
 	phases = RandUnifPhase();
 	if(gaussian_frequencies==true){
@@ -69,6 +93,8 @@ int main(void)
 
 //Test distribution for initial configurations:
 	if(check_initial==true){
+		float sum_phases = 0;
+		float sum_ang_freqs = 0;
 		for ( i = 0; i < N; ++i) {
 		    printf( "\nphases[%d] = %f\n", i, phases[i]);
 		    sum_phases+=phases[i];
@@ -89,19 +115,38 @@ int main(void)
 		printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
 		printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
 }
+	
+	//----------------------START SINGLE RUN LOOP----------------------//
+	//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
+	ord_param = OrderParam(phases);
+	freq_ord_param = FreqOrderParam(ang_freqs);
+	printf("Initial OrderParameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
+	printf("Initial FreqOrderParameter = %.3f + %.3fi", creal(freq_ord_param),cimag(freq_ord_param));
 
-	printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
-	int T_split = (int)(T/20);
+	int T_split = (int)(T/100);
 	for(i=0;i<T;i++){
 		if(i%T_split==0)
 		{
-			printf("\nProcess at %d/100 ", 100*(int)(i)/T);
-		}
-		EulerStep(phases, ang_freqs, K1);
-	}
-	printf("\n\n");	
+			printf("\nProcess at %d/100\n", 100*(int)(i)/T);
+			ord_param = OrderParam(phases);
+			printf("Order parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
+			freq_ord_param = OrderParam(ang_freqs);
+			printf("Freq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
 
-	printf("FinalPhase=%.5f,\tFinalFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
+
+		}
+		EulerStep(phases, ang_freqs, 100);
+	}
+
+	//----------------------END SINGLE RUN LOOP----------------------//
+
+	printf("\n\n");	
+	
+	ord_param = OrderParam(phases);
+	freq_ord_param = FreqOrderParam(ang_freqs);
+
+	printf("Final Order parameter = %.3f + %.3f\n", creal(ord_param),cimag(ord_param));
+	printf("Final FreqOrderParameter = %.3f + %.3fi", creal(freq_ord_param),cimag(freq_ord_param));
 
 
 
@@ -182,7 +227,37 @@ float PeriodicPosition(float angular_pos){
 	return angular_pos;
 }
 
-void EulerStep(float *phases, float *ang_freqs, int K)
+float complex OrderParam(float *phases)
+	{
+		int i;
+    	double complex ord_param = 0 + 0 * I;
+		for(i = 0;i < N; i++)
+		{
+			ord_param += cexp(I*phases[i]);
+			//printf("Inside OrderParam = %.2f+I%.2f\n",creal(ord_param),cimag(ord_param));
+
+		}
+		//ord_param = (ord_param)*iN;
+
+		return ord_param;
+	}
+
+float complex FreqOrderParam(float *ang_freqs)
+	{
+		int i;
+    	double complex freq_ord_param = 0 + 0 * I;
+		for(i = 0;i < N; i++)
+		{
+			freq_ord_param += cexp(I*ang_freqs[i]);
+
+		}
+		//ord_param = (ord_param)*iN;
+
+		return freq_ord_param;
+	}
+
+
+void EulerStep(float *phases, float *ang_freqs, float K)
 {
 	int i,j;
 
@@ -193,6 +268,7 @@ void EulerStep(float *phases, float *ang_freqs, int K)
 	floatN = (float)N;
   	for(i = 0;i < N; i++)
   	{	
+  		sum_term = 0;
   		//Copy initial phase
   		phase_updated[i] = phases[i];
   		//Perform evaluation of additional term
@@ -211,4 +287,19 @@ void EulerStep(float *phases, float *ang_freqs, int K)
   		ang_freqs[i] = frequencies_updated[i];
   	}	
 
+}
+
+const char * CreateResultsFolder(){
+	char path_results[PATH_MAX];
+   	if (getcwd(path_results, sizeof(path_results)) != NULL) {
+       //printf("Current working dir: %s\n", path_results);
+   	} else {
+       perror("getcwd() error");
+    }
+   	strcat(path_results, "/results");
+    int ret;
+    ret = mkdir(path_results,0777); //creates folder
+    //printf("\nPATH IS NOW:\n%s\n\n",path_results);
+
+	return path_results;
 }
