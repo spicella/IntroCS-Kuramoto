@@ -42,8 +42,10 @@ float * RandGauss();
 //Functions declarartion:
 
 int main(void)    
-{
+{	
+	clock_t begin = clock();
 	srand(time(NULL));
+	sleep(0);
 
 
 	//List of input parameters
@@ -65,7 +67,6 @@ int main(void)
 	float sum_ang_freqs = 0;
 
 	phases = RandUnifPhase();
-	sleep(1);
 	if(gaussian_frequencies==true){
 		ang_freqs= RandGauss();
 	}
@@ -75,25 +76,25 @@ int main(void)
 
 //Test distribution for initial configurations:
 	if(check_initial==true){
-	for ( i = 0; i < N; ++i) {
-    printf( "\nphases[%d] = %f\n", i, phases[i]);
-    sum_phases+=phases[i];
-    printf( "ang_freqs[%d] = %f\n", i, ang_freqs[i]);
-    sum_ang_freqs+=ang_freqs[i];
-	}
-	float mean_phases, mean_ang_freq, var_phases, var_ang_freq;
-	mean_phases = sum_phases/N;
-	mean_ang_freq = sum_ang_freqs/N;
+		for ( i = 0; i < N; ++i) {
+		    printf( "\nphases[%d] = %f\n", i, phases[i]);
+		    sum_phases+=phases[i];
+		    printf( "ang_freqs[%d] = %f\n", i, ang_freqs[i]);
+		    sum_ang_freqs+=ang_freqs[i];
+		}
+		float mean_phases, mean_ang_freq, var_phases, var_ang_freq;
+		mean_phases = sum_phases/N;
+		mean_ang_freq = sum_ang_freqs/N;
 
-	for ( i = 0; i < N; ++i) {
-    var_phases+=(phases[i]-mean_phases)*(phases[i]-mean_phases);
-    var_ang_freq+=(ang_freqs[i]-mean_ang_freq)*(ang_freqs[i]-mean_ang_freq);
-	}
-	
-	printf("\n\n\nMean Phases = %.5f\n",mean_phases/N);
-	printf("Variance Phases = %.5f\n\n",var_phases/N);
-	printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
-	printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
+		for ( i = 0; i < N; ++i) {
+		    var_phases+=(phases[i]-mean_phases)*(phases[i]-mean_phases);
+		    var_ang_freq+=(ang_freqs[i]-mean_ang_freq)*(ang_freqs[i]-mean_ang_freq);
+		}
+		
+		printf("\n\n\nMean Phases = %.5f\n",mean_phases/N);
+		printf("Variance Phases = %.5f\n\n",var_phases/N);
+		printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
+		printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
 }
 	
 
@@ -108,7 +109,9 @@ int main(void)
 
 	printf("//----------------------------------------------------------------//\n\n");
 
-
+	clock_t end = clock();
+	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+	printf("Execution time: %.5f seconds\n\n",time_spent);
   	return 0;
 }
 
