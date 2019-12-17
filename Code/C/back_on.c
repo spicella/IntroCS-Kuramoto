@@ -6,18 +6,17 @@
 #include <math.h>
 
 //---------------Begin Definitions---------------//
-	#define turn_angle  2.*M_PI;
-
+	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000 //number of Kuramoto oscillators
+	#define N 1000	 //number of Kuramoto oscillators
 	#define dt .001 //time step
-	#define T 20 //simulation runtime
+	#define T 1000 //simulation runtime
 
 //For fixed value of K-s in simulation
-	#define K1 1
-	#define K2 2
+	#define K1 1.
+	#define K2 2.
 //For sweeping of K
-	#define K0 0
+	#define K0 0.
 	#define dK .02
 	#define K_max 1.5 //
 //---------------End Definitions---------------//
@@ -32,10 +31,13 @@
 	//ODE + constant K-s
 
 
+void PrintParams();
 float * RandUnifPhase();
 float * RandUnifFreq();
 
 float * RandGauss();
+float PeriodicPosition(float angular_pos);
+void EulerStep(float *phase, float *frequencies, int K);
 
 
 
@@ -47,16 +49,7 @@ int main(void)
 	srand(time(NULL));
 	sleep(0);
 
-
-	//List of input parameters
-	printf("//------------------------Input parameters------------------------//\n");
-	printf("//\t\tNumber of Oscillators = %d\n",N);
-	printf("//\t\tRuntime simulation = %d\n",T);
-	printf("//\t\tdt = %.5f\n",dt);
-	printf("//\t\tGaussian initial frequencies? = %s\n", gaussian_frequencies ? "True :D" : "False : (");
-	printf("//\t\tCheck initial conditions? = %s\n", check_initial ? "True :D" : "False : (");
-
-	printf("//----------------------------------------------------------------//\n\n");
+	PrintParams();
 
 	//Declarations
 	int i,j,k;
@@ -96,26 +89,45 @@ int main(void)
 		printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
 		printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
 }
-	
+
+	printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
+	int T_split = (int)(T/20);
+	for(i=0;i<T;i++){
+		if(i%T_split==0)
+		{
+			printf("\nProcess at %d/100 ", 100*(int)(i)/T);
+		}
+		EulerStep(phases, ang_freqs, K1);
+	}
+	printf("\n\n");	
+
+	printf("FinalPhase=%.5f,\tFinalFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
+
 
 
 	//List of input parameters
-	printf("\n\n\n//------------------------Input parameters------------------------//\n");
-	printf("//\t\tNumber of Oscillators = %d\n",N);
-	printf("//\t\tRuntime simulation = %d\n",T);
-	printf("//\t\tdt = %.5f\n",dt);
-	printf("//\t\tGaussian initial frequencies? = %s\n", gaussian_frequencies ? "True :D" : "False : (");
-	printf("//\t\tCheck initial conditions? = %s\n", check_initial ? "True :D" : "False : (");
-
-	printf("//----------------------------------------------------------------//\n\n");
-
+	PrintParams();
 	clock_t end = clock();
 	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 	printf("Execution time: %.5f seconds\n\n",time_spent);
   	return 0;
 }
 
+
 //Function implementations
+
+void PrintParams()
+{
+	printf("\n\n\n//------------------------Input parameters------------------------//\n");
+	printf("//\t\tNumber of Oscillators = %d\n",N);
+	printf("//\t\tRuntime simulation = %d\n",T);
+	printf("//\t\tdt = %.5f\n",dt);
+	printf("//\t\tGaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
+	printf("//\t\tCheck initial conditions? = %s\n", check_initial ? "True!" : "False!");
+
+	printf("//----------------------------------------------------------------//\n\n");
+}
+
 float * RandUnifPhase( ) {
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
@@ -157,7 +169,46 @@ float * RandGauss(  ) {
       	phase = U2 * turn_angle;
       	r[2*i] = sqrt_term*cos(phase);
       	r[2*i+1] = sqrt_term*sin(phase);
-
     }
     return r;
+}
+float PeriodicPosition(float angular_pos){
+	if (angular_pos>turn_angle){
+		angular_pos-=turn_angle;
+	}
+	if (angular_pos<0){
+		angular_pos+=turn_angle;
+	}
+	return angular_pos;
+}
+
+void EulerStep(float *phases, float *ang_freqs, int K)
+{
+	int i,j;
+
+	float phase_updated[N] = {0} ; 
+	float frequencies_updated[N] = {0} ; 
+	float sum_term = 0.;
+	float floatN;
+	floatN = (float)N;
+  	for(i = 0;i < N; i++)
+  	{	
+  		//Copy initial phase
+  		phase_updated[i] = phases[i];
+  		//Perform evaluation of additional term
+  		for(j = 0;j < N; j++)
+  			{
+  				sum_term += sin(phases[j])-sin(phases[i]);
+  			}
+  			sum_term = sum_term*(K/floatN);
+  		frequencies_updated[i]=ang_freqs[i] + sum_term;
+  		phase_updated[i] +=  frequencies_updated[i]*dt;
+  	}
+
+  	for(i = 0; i < N;i++)
+  	{
+  		phases[i] = PeriodicPosition(phase_updated[i]);
+  		ang_freqs[i] = frequencies_updated[i];
+  	}	
+
 }
