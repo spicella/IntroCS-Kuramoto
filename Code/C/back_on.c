@@ -12,23 +12,20 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
-
-
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 100	 //number of Kuramoto oscillators
+	#define N 1000	 //number of Kuramoto oscillators
 	
-	#define dt .000001 //time step
-	#define T 200000 //simulation runtime
+	#define dt .00001 //time step
+	#define T 50000 //simulation runtime
 
 //For fixed value of K-s in simulation
 	#define K1 1.
-	#define K2 .05
+	#define K2 .1
 //For sweeping of K
 	#define K0 0.
-	#define dK .02
+	#define dK .2
 	#define K_max 1.5 //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
@@ -42,20 +39,20 @@
 	bool sweeping_K = false;
 	//ODE + constant K-s
 
+
+//-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
 void PrintParams();
 float * RandUnifPhase();
 float * RandUnifFreq();
-
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
 void EulerStep(float *phase, float *frequencies, float K);
 float complex OrderParam(float *phases);
 float complex FreqOrderParam(float *ang_freqs);
 void ClearResultsFile(float K);
-
 void WriteResults(float complex ord_param, float complex freq_ord_param, float K);
-
+//----------------------------------------------------------------------//
 
 
 float iN=(float)(1/N);
@@ -64,105 +61,99 @@ float iN=(float)(1/N);
 
 int main(void)    
 {	
-	clock_t begin = clock();
+	clock_t begin_main = clock();
 	srand(time(NULL));
 	sleep(0);
-;
+	CreateResultsFolder();
 
-	//filename=strcat(filename,".csv");
-
-
-
-
-	//const char* results_path = CreateResultsFolder();
-	//printf("%s", results_path);
-
-	PrintParams();
-
-	//Declarations
-	int i,j,k;
+	int i,j;
 	float complex iN = (float)(1/N)+I*0; //inverse of N
-	float *phases;
-	float *ang_freqs;
-	double complex ord_param = 0 + 0 * I;
-	double freq_ord_param = 0 + 0 * I;
-	
 
-	phases = RandUnifPhase();
-	if(gaussian_frequencies==true){
-		ang_freqs= RandGauss();
-	}
-	else{
-		ang_freqs= RandUnifFreq();
-	}
+	float K_range = K_max - K0;
+	int number_k_steps = K_range/dK;
+	for(j=0;j<number_k_steps+1;j++)
+	{
+		clock_t begin_loop = clock();
 
-//Test distribution for initial configurations:
-	if(check_initial==true){
-		float sum_phases = 0;
-		float sum_ang_freqs = 0;
-		for ( i = 0; i < N; ++i) {
-		    printf( "\nphases[%d] = %f\n", i, phases[i]);
-		    sum_phases+=phases[i];
-		    printf( "ang_freqs[%d] = %f\n", i, ang_freqs[i]);
-		    sum_ang_freqs+=ang_freqs[i];
-		}
-		float mean_phases, mean_ang_freq, var_phases, var_ang_freq;
-		mean_phases = sum_phases/N;
-		mean_ang_freq = sum_ang_freqs/N;
+		float K_run = j*dK;
+		//printf("%s", results_path);
+		PrintParams();
 
-		for ( i = 0; i < N; ++i) {
-		    var_phases+=(phases[i]-mean_phases)*(phases[i]-mean_phases);
-		    var_ang_freq+=(ang_freqs[i]-mean_ang_freq)*(ang_freqs[i]-mean_ang_freq);
-		}
+		//Declarations
+
+		float *phases;
+		float *ang_freqs;
+		double complex ord_param = 0 + 0 * I;
+		double freq_ord_param = 0 + 0 * I;
 		
-		printf("\n\n\nMean Phases = %.5f\n",mean_phases/N);
-		printf("Variance Phases = %.5f\n\n",var_phases/N);
-		printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
-		printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
-}
-	//----------------------START SINGLE RUN LOOP----------------------//
-	//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
-	ord_param = OrderParam(phases);
-	freq_ord_param = FreqOrderParam(ang_freqs);
-	printf("Initial OrderParameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
-	printf("Initial FreqOrderParameter = %.3f + %.3fi", creal(freq_ord_param),cimag(freq_ord_param));
 
-	int T_split = (int)(T/100);
-	ClearResultsFile(K2);
-	for(i=0;i<T;i++){
-		if(i%T_split==0)
-		{	
-
-			printf("\nProcess at %d/100\n", 100*(int)(i)/T);
-			ord_param = OrderParam(phases);
-			printf("Order parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
-			freq_ord_param = OrderParam(ang_freqs);
-			printf("Freq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
-
-
+		phases = RandUnifPhase();
+		if(gaussian_frequencies==true){
+			ang_freqs= RandGauss();
 		}
-		WriteResults(ord_param, freq_ord_param, K2);
-		EulerStep(phases, ang_freqs, K2);
+		else{
+			ang_freqs= RandUnifFreq();
+		}
+
+	//Test distribution for initial configurations:
+		if(check_initial==true){
+			float sum_phases = 0;
+			float sum_ang_freqs = 0;
+			for ( i = 0; i < N; ++i) {
+			    printf( "\nphases[%d] = %f\n", i, phases[i]);
+			    sum_phases+=phases[i];
+			    printf( "ang_freqs[%d] = %f\n", i, ang_freqs[i]);
+			    sum_ang_freqs+=ang_freqs[i];
+			}
+			float mean_phases, mean_ang_freq, var_phases, var_ang_freq;
+			mean_phases = sum_phases/N;
+			mean_ang_freq = sum_ang_freqs/N;
+
+			for ( i = 0; i < N; ++i) {
+			    var_phases+=(phases[i]-mean_phases)*(phases[i]-mean_phases);
+			    var_ang_freq+=(ang_freqs[i]-mean_ang_freq)*(ang_freqs[i]-mean_ang_freq);
+			}
+			
+			printf("\n\n\nMean Phases = %.5f\n",mean_phases/N);
+			printf("Variance Phases = %.5f\n\n",var_phases/N);
+			printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
+			printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
 	}
+		//----------------------START SINGLE RUN LOOP----------------------//
+		//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
+		
+		int T_split = (int)(T/100);
+		ClearResultsFile(K_run);
+		for(i=0;i<T;i++){
+			if(i%T_split==0)
+			{	
 
-	//----------------------END SINGLE RUN LOOP----------------------//
-
-	printf("\n\n");	
-	
-	ord_param = OrderParam(phases);
-	freq_ord_param = FreqOrderParam(ang_freqs);
-
-	printf("Final Order parameter = %.3f + %.3f\n", creal(ord_param),cimag(ord_param));
-	printf("Final FreqOrderParameter = %.3f + %.3fi", creal(freq_ord_param),cimag(freq_ord_param));
+				printf("\nProcess at %d/100\n", 100*(int)(i)/T);
+				ord_param = OrderParam(phases);
+				printf("Order parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
+				freq_ord_param = OrderParam(ang_freqs);
+				printf("Freq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
 
 
+			}
+			WriteResults(ord_param, freq_ord_param, K_run);
+			EulerStep(phases, ang_freqs, K_run);
+		}
 
+		//----------------------END SINGLE RUN LOOP----------------------//
 
-	//List of input parameters
-	PrintParams();
-	clock_t end = clock();
-	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-	printf("Execution time: %.5f seconds\n\n",time_spent);
+		//List of input parameters
+		PrintParams();
+		clock_t inner_loop_end = clock();
+		double loop_time_spent = (double)(inner_loop_end - begin_loop) / CLOCKS_PER_SEC;
+		printf("Loop time: %.5f seconds\n\n",loop_time_spent);
+
+	}
+	clock_t outer_loop_end = clock();
+
+	double total_time_spent = (double)(outer_loop_end - begin_main) / CLOCKS_PER_SEC;
+
+	printf("Total execution time: %.5f seconds\n\n",total_time_spent);
   	return 0;
 }
 
@@ -308,8 +299,12 @@ void ClearResultsFile(float K){
 		/*Remove File with the same name, avoid overwriting*/
 		char filename[64];
 		FILE *out;
-		sprintf(filename, "results/N%d_T%d_dt%.8f_K%.2f.tsv", N,T,dt,K);
-		if (remove(filename) == 0) 
+		if(gaussian_frequencies==true){
+			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_K%.2f.tsv", N,T,dt,K);
+		}
+		else{
+			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_K%.2f.tsv", N,T,dt,K);
+		}		if (remove(filename) == 0) 
       		printf("Deleted successfully"); 
    		else
       		printf("Unable to delete the file"); 
@@ -320,11 +315,14 @@ void WriteResults(float complex ord_param, float complex freq_ord_param, float K
 		int i;
 		char filename[64];
 		FILE *out;
-		sprintf(filename, "results/N%d_T%d_dt%.8f_K%.2f.tsv", N,T,dt,K);
+		if(gaussian_frequencies==true){
+			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_K%.2f.tsv", N,T,dt,K);
+		}
+		else{
+			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_K%.2f.tsv", N,T,dt,K);
+		}
 		out = fopen( filename, "a");
 		//fprintf(out, "%.20f\t%.20f\t%.20f\t%.20f\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
 		fprintf(out, "%.20f\n", creal(ord_param)/N);
-
 		fclose(out);
-
 }
