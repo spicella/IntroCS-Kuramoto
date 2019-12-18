@@ -17,14 +17,14 @@
 //---------------Begin Definitions---------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000	 //number of Kuramoto oscillators
+	#define N 100	 //number of Kuramoto oscillators
 	
-	#define dt .001 //time step
+	#define dt .005 //time step
 	#define T 100 //simulation runtime
 
 //For fixed value of K-s in simulation
 	#define K1 1.
-	#define K2 2.
+	#define K2 3.
 //For sweeping of K
 	#define K0 0.
 	#define dK .02
@@ -318,11 +318,11 @@ void ClearResultsFile(float K)
 		/*Remove File with the same name, avoid overwriting*/
 		char filename[64];
 		FILE *out;
-		sprintf(filename, "N%d_T%d_dt%.5f_K%.2f.csv", N,T,dt,K);
+		sprintf(filename, "results/N%d_T%d_dt%.5f_K%.2f.csv", N,T,dt,K);
 		if (remove(filename) == 0) 
-      	printf("Deleted successfully"); 
+      		printf("Deleted successfully"); 
    		else
-      	printf("Unable to delete the file"); 
+      		printf("Unable to delete the file"); 
 	}
 
 void WriteResults(float complex ord_param, float complex freq_ord_param, float K)
@@ -334,7 +334,7 @@ void WriteResults(float complex ord_param, float complex freq_ord_param, float K
 		FILE *out;
 		sprintf(filename, "results/N%d_T%d_dt%.5f_K%.2f.csv", N,T,dt,K);
 		out = fopen( filename, "a");
-		fprintf(out, "%.5f, %.5f, %.5f, %.5f\n", creal(ord_param),cimag(ord_param),creal(freq_ord_param),cimag(freq_ord_param));
+		fprintf(out, "%.8f, %.8f, %.8f, %.8f\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
 		fclose(out);
 
 	}
