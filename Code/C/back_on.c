@@ -17,10 +17,10 @@
 //---------------Begin Definitions---------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 100	 //number of Kuramoto oscillators
+	#define N 1000	 //number of Kuramoto oscillators
 	
 	#define dt .001 //time step
-	#define T 1 //simulation runtime
+	#define T 100 //simulation runtime
 
 //For fixed value of K-s in simulation
 	#define K1 1.
@@ -41,7 +41,7 @@
 	bool sweeping_K = false;
 	//ODE + constant K-s
 
-const char * CreateResultsFolder();
+void CreateResultsFolder();
 void PrintParams();
 float * RandUnifPhase();
 float * RandUnifFreq();
@@ -51,6 +51,9 @@ float PeriodicPosition(float angular_pos);
 void EulerStep(float *phase, float *frequencies, float K);
 float complex OrderParam(float *phases);
 float complex FreqOrderParam(float *ang_freqs);
+void ClearResultsFile(float K);
+void WriteResults(float complex ord_param, float complex freq_ord_param, float K);
+
 
 
 float iN=(float)(1/N);
@@ -69,8 +72,8 @@ int main(void)
 
 
 
-	const char* results_path = CreateResultsFolder();
-	printf("%s", results_path);
+	//const char* results_path = CreateResultsFolder();
+	//printf("%s", results_path);
 
 	PrintParams();
 
@@ -115,7 +118,6 @@ int main(void)
 		printf("Mean ang_freqs = %.5f\n",mean_ang_freq/N);
 		printf("Variance ang_freqs = %.5f\n",var_ang_freq/N);
 }
-	
 	//----------------------START SINGLE RUN LOOP----------------------//
 	//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
 	ord_param = OrderParam(phases);
@@ -124,9 +126,11 @@ int main(void)
 	printf("Initial FreqOrderParameter = %.3f + %.3fi", creal(freq_ord_param),cimag(freq_ord_param));
 
 	int T_split = (int)(T/100);
+	ClearResultsFile(K2);
 	for(i=0;i<T;i++){
 		if(i%T_split==0)
-		{
+		{	
+
 			printf("\nProcess at %d/100\n", 100*(int)(i)/T);
 			ord_param = OrderParam(phases);
 			printf("Order parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
@@ -135,7 +139,8 @@ int main(void)
 
 
 		}
-		EulerStep(phases, ang_freqs, 100);
+		WriteResults(ord_param, freq_ord_param, K2);
+		EulerStep(phases, ang_freqs, K2);
 	}
 
 	//----------------------END SINGLE RUN LOOP----------------------//
@@ -150,6 +155,8 @@ int main(void)
 
 
 
+
+
 	//List of input parameters
 	PrintParams();
 	clock_t end = clock();
@@ -157,6 +164,11 @@ int main(void)
 	printf("Execution time: %.5f seconds\n\n",time_spent);
   	return 0;
 }
+
+
+
+
+
 
 
 //Function implementations
@@ -289,7 +301,7 @@ void EulerStep(float *phases, float *ang_freqs, float K)
 
 }
 
-const char * CreateResultsFolder(){
+void CreateResultsFolder(){
 	char path_results[PATH_MAX];
    	if (getcwd(path_results, sizeof(path_results)) != NULL) {
        //printf("Current working dir: %s\n", path_results);
@@ -299,7 +311,30 @@ const char * CreateResultsFolder(){
    	strcat(path_results, "/results");
     int ret;
     ret = mkdir(path_results,0777); //creates folder
-    //printf("\nPATH IS NOW:\n%s\n\n",path_results);
-
-	return path_results;
 }
+
+void ClearResultsFile(float K)
+	{
+		/*Remove File with the same name, avoid overwriting*/
+		char filename[64];
+		FILE *out;
+		sprintf(filename, "N%d_T%d_dt%.5f_K%.2f.csv", N,T,dt,K);
+		if (remove(filename) == 0) 
+      	printf("Deleted successfully"); 
+   		else
+      	printf("Unable to delete the file"); 
+	}
+
+void WriteResults(float complex ord_param, float complex freq_ord_param, float K)
+	{
+		/*Single shot writing of order param and freq order param (both real and complex)*/
+		int i;
+		char filename[64];
+
+		FILE *out;
+		sprintf(filename, "results/N%d_T%d_dt%.5f_K%.2f.csv", N,T,dt,K);
+		out = fopen( filename, "a");
+		fprintf(out, "%.5f, %.5f, %.5f, %.5f\n", creal(ord_param),cimag(ord_param),creal(freq_ord_param),cimag(freq_ord_param));
+		fclose(out);
+
+	}
