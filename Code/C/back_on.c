@@ -17,15 +17,15 @@
 //Main parameters
 	#define N 1000	 //number of Kuramoto oscillators
 	
-	#define dt .00001 //time step
-	#define T 50000 //simulation runtime
+	#define dt .0025 //time step
+	#define T 2500 //simulation runtime
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 0.
-	#define dK .2
+	#define K0 0.00
+	#define dK .1
 	#define K_max 1.5 //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
@@ -42,7 +42,7 @@
 
 //-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
-void PrintParams();
+void PrintParams(float K_run);
 float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
@@ -71,13 +71,14 @@ int main(void)
 
 	float K_range = K_max - K0;
 	int number_k_steps = K_range/dK;
-	for(j=0;j<number_k_steps+1;j++)
+	for(j=0;j<number_k_steps;j++)
 	{
+		printf("RUNNING %d/%d element in K loop\nK=%.2f",j,number_k_steps,j*dK);
 		clock_t begin_loop = clock();
 
 		float K_run = j*dK;
 		//printf("%s", results_path);
-		PrintParams();
+		PrintParams(K_run);
 
 		//Declarations
 
@@ -128,11 +129,11 @@ int main(void)
 			if(i%T_split==0)
 			{	
 
-				printf("\nProcess at %d/100\n", 100*(int)(i)/T);
+				printf("\n\tProcess at %d/100, K=%.2f\n", 100*(int)(i)/T,K_run);
 				ord_param = OrderParam(phases);
-				printf("Order parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
+				printf("\tOrder parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
 				freq_ord_param = OrderParam(ang_freqs);
-				printf("Freq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
+				printf("\tFreq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
 
 
 			}
@@ -143,7 +144,7 @@ int main(void)
 		//----------------------END SINGLE RUN LOOP----------------------//
 
 		//List of input parameters
-		PrintParams();
+		PrintParams(K_run);
 		clock_t inner_loop_end = clock();
 		double loop_time_spent = (double)(inner_loop_end - begin_loop) / CLOCKS_PER_SEC;
 		printf("Loop time: %.5f seconds\n\n",loop_time_spent);
@@ -164,11 +165,11 @@ int main(void)
 
 //-----------------------------------Function implementations-----------------------------------//
 
-void PrintParams(){
+void PrintParams(float K_run){
 	printf("\n\n\n//------------------------Input parameters------------------------//\n");
 	printf("//\t\tNumber of Oscillators = %d\n",N);
 	printf("//\t\tRuntime simulation = %d\n",T);
-	printf("//\t\tK = %.2f\n",K2);
+	printf("//\t\tK = %.2f\n",K_run);
 	printf("//\t\tdt = %.5f\n",dt);
 	printf("//\t\tGaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
 	printf("//\t\tCheck initial conditions? = %s\n", check_initial ? "True!" : "False!");
@@ -323,6 +324,8 @@ void WriteResults(float complex ord_param, float complex freq_ord_param, float K
 		}
 		out = fopen( filename, "a");
 		//fprintf(out, "%.20f\t%.20f\t%.20f\t%.20f\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
-		fprintf(out, "%.20f\n", creal(ord_param)/N);
+		fprintf(out,"%.20f\t%.20f\t%.20f\t%.20f\t\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
+
 		fclose(out);
+
 }
