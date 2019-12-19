@@ -1,6 +1,3 @@
-theme: jekyll-theme-cayman
-title: Welcome!
-
 ![alt text](https://sites.lsa.umich.edu/ksmoore/wp-content/uploads/sites/630/2018/06/TacomaNarrows.jpg)
 
 description:
