@@ -15,7 +15,7 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000	 //number of Kuramoto oscillators
+	#define N 200	 //number of Kuramoto oscillators
 	
 	#define dt .0025 //time step
 	#define T 2500 //simulation runtime
@@ -26,7 +26,7 @@
 //For sweeping of K
 	#define K0 0.00
 	#define dK .1
-	#define K_max 1.5 //
+	#define K_max 2. //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -51,7 +51,7 @@ void EulerStep(float *phase, float *frequencies, float K);
 float complex OrderParam(float *phases);
 float complex FreqOrderParam(float *ang_freqs);
 void ClearResultsFile(float K);
-void WriteResults(float complex ord_param, float complex freq_ord_param, float K);
+void WriteResults(float complex ord_param, float complex freq_ord_param, float K, float t_loop);
 //----------------------------------------------------------------------//
 
 
@@ -137,7 +137,7 @@ int main(void)
 
 
 			}
-			WriteResults(ord_param, freq_ord_param, K_run);
+			WriteResults(ord_param, freq_ord_param, K_run,i);
 			EulerStep(phases, ang_freqs, K_run);
 		}
 
@@ -237,7 +237,6 @@ float complex OrderParam(float *phases){
 		{
 			ord_param += cexp(I*phases[i]);
 			//printf("Inside OrderParam = %.2f+I%.2f\n",creal(ord_param),cimag(ord_param));
-
 		}
 		return ord_param;
 }
@@ -251,7 +250,6 @@ float complex FreqOrderParam(float *ang_freqs){
 		}
 		return freq_ord_param;
 }
-
 
 void EulerStep(float *phases, float *ang_freqs, float K){
 	int i,j;
@@ -269,7 +267,7 @@ void EulerStep(float *phases, float *ang_freqs, float K){
   		//Perform evaluation of additional term
   		for(j = 0;j < N; j++)
   			{
-  				sum_term += sin(phases[j])-sin(phases[i]);
+  				sum_term += sin(phases[j])-sin(phases[i]); //check if 
   			}
   			sum_term = sum_term*(K/floatN);
   		frequencies_updated[i]=ang_freqs[i] + sum_term;
@@ -311,7 +309,7 @@ void ClearResultsFile(float K){
       		printf("Unable to delete the file"); 
 }
 
-void WriteResults(float complex ord_param, float complex freq_ord_param, float K){
+void WriteResults(float complex ord_param, float complex freq_ord_param, float K, float t_loop){
 		/*Single shot writing of order param and freq order param (both real and complex)*/
 		int i;
 		char filename[64];
@@ -324,7 +322,7 @@ void WriteResults(float complex ord_param, float complex freq_ord_param, float K
 		}
 		out = fopen( filename, "a");
 		//fprintf(out, "%.20f\t%.20f\t%.20f\t%.20f\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
-		fprintf(out,"%.20f\t%.20f\t%.20f\t%.20f\t\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
+		fprintf(out,"%.4f\t%.20f\t%.20f\t%.20f\t%.20f\t\n",t_loop*dt,creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
 
 		fclose(out);
 
