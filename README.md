@@ -1,6 +1,9 @@
+theme: jekyll-theme-cayman
+title: Welcome!
+
 ![alt text](https://sites.lsa.umich.edu/ksmoore/wp-content/uploads/sites/630/2018/06/TacomaNarrows.jpg)
 
-
+description:
 # Intro_to_ComplexSystems-Kuramoto
 Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduction to Complex Systems Course @ Utrecht University, Dec'19-Jan'20. Main simulations will run with a C code, plotting and analysis on Python
 
