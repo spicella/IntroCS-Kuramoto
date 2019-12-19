@@ -15,18 +15,18 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 200	 //number of Kuramoto oscillators
+	#define N 100	 //Number of Kuramoto oscillators
 	
-	#define dt .0025 //time step
-	#define T 2500 //simulation runtime
+	#define dt .001 //Time step
+	#define T 100000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 0.00
-	#define dK .1
-	#define K_max 2. //
+	#define K0 .8
+	#define dK .2
+	#define K_max 1 //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -70,13 +70,13 @@ int main(void)
 	float complex iN = (float)(1/N)+I*0; //inverse of N
 
 	float K_range = K_max - K0;
-	int number_k_steps = K_range/dK;
+	int number_k_steps = K_range/dK+1;
 	for(j=0;j<number_k_steps;j++)
 	{
 		printf("RUNNING %d/%d element in K loop\nK=%.2f",j,number_k_steps,j*dK);
 		clock_t begin_loop = clock();
 
-		float K_run = j*dK;
+		float K_run = K0+j*dK;
 		//printf("%s", results_path);
 		PrintParams(K_run);
 
@@ -122,12 +122,9 @@ int main(void)
 	}
 		//----------------------START SINGLE RUN LOOP----------------------//
 		//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
-		
-		int T_split = (int)(T/100);
+		int T_split = (int)(T);
 		ClearResultsFile(K_run);
-		for(i=0;i<T;i++){
-			if(i%T_split==0)
-			{	
+		for(i=0;i<T+1;i++){
 
 				printf("\n\tProcess at %d/100, K=%.2f\n", 100*(int)(i)/T,K_run);
 				ord_param = OrderParam(phases);
@@ -135,8 +132,6 @@ int main(void)
 				freq_ord_param = OrderParam(ang_freqs);
 				printf("\tFreq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
 
-
-			}
 			WriteResults(ord_param, freq_ord_param, K_run,i);
 			EulerStep(phases, ang_freqs, K_run);
 		}
@@ -267,7 +262,7 @@ void EulerStep(float *phases, float *ang_freqs, float K){
   		//Perform evaluation of additional term
   		for(j = 0;j < N; j++)
   			{
-  				sum_term += sin(phases[j])-sin(phases[i]); //check if 
+  				sum_term += sin(phases[j]-phases[i]); //check if real sines
   			}
   			sum_term = sum_term*(K/floatN);
   		frequencies_updated[i]=ang_freqs[i] + sum_term;
