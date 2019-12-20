@@ -15,10 +15,10 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000	 //Number of Kuramoto oscillators
+	#define N 2000	 //Number of Kuramoto oscillators
 	
 	#define dt .001 //Time step
-	#define T 30000 //End of simulation time
+	#define T 50000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
@@ -48,7 +48,7 @@ float * RandUnifFreq();
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
 void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]);
-void OrderParamMod(float *phases, double o_param[]);
+void OrderParam(float *phases, double o_param[]);
 void ClearResultsFile(float K);
 void WriteResults(double o_par[], float K, float t_loop);
 //----------------------------------------------------------------------//
@@ -124,7 +124,7 @@ int main(void)
 		int T_split = (int)(T/100);
 		ClearResultsFile(K_run);
 		for(i=0;i<T+1;i++){
-			OrderParamMod(phases,ord_param);
+			OrderParam(phases,ord_param);
 			WriteResults(ord_param, K_run,i);
 			EulerStep(phases, ang_freqs, K_run,ord_param);
 			
@@ -226,7 +226,7 @@ float PeriodicPosition(float angular_pos){
 	return angular_pos;
 }
 
-void OrderParamMod(float *phases, double o_par[])
+void OrderParam(float *phases, double o_par[])
 {
 		int i;
     	double real_ord_param = 0;
@@ -252,7 +252,7 @@ void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]){
   	{	
   		ang_freqs[i] +=  K*o_par[0]*sin(o_par[1]-phases[i]);
   		phases[i] += dt*ang_freqs[i];
-  		phases[i] = PeriodicPosition(phases[i]);
+  		//phases[i] = PeriodicPosition(phases[i]);
   	}
 }
 
