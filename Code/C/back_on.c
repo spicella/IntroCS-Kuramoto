@@ -18,15 +18,15 @@
 	#define N 1000	 //Number of Kuramoto oscillators
 	#define n_runs 5 //Number of runs per given K
 	#define dt .001 //Time step
-	#define T 10000 //End of simulation time
+	#define T 50000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
 	#define K0 .0
-	#define dK .05
-	#define K_max .8 //
+	#define dK .0001
+	#define K_max .05 //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -75,7 +75,6 @@ int main(void)
 	//--------------------START K LOOP--------------------//
 	for(j=0;j<number_k_steps;j++)
 	{
-		printf("\t\tRUNNING %d/%d element in K loop\n\t\tK=%.4f",j,number_k_steps,j*dK);
 		clock_t begin_k_loop = clock();
 
 		float K_run = K0+j*dK;
@@ -94,9 +93,14 @@ int main(void)
 			float ord_param_acc[n_runs][T+1][2] = {0};		
 			//----------------------START MULTIPLE RUNS LOOP----------------------//
 			for(k=0;k<n_runs;k++){
-				printf("_________________________________________________\n\n");
+				clock_t check_elapsed_time = clock();
+				double check_elapsed = (double)(check_elapsed_time - begin_main) / CLOCKS_PER_SEC;
+				
+
+				printf("____________________________________________________________\n\n");
 				printf("\t\tK = %.4f (%d/%d), RUN %d/%d, \n",K_run,j+1,number_k_steps,k+1,n_runs);
-				printf("_________________________________________________\n");
+				printf("\t\tTotal elapsed time =  %.5f seconds\n",check_elapsed);
+				printf("____________________________________________________________\n");
 				//Initialize phases and frequencies
 				phases = RandUnifPhase();
 				if(gaussian_frequencies==true){
@@ -176,8 +180,8 @@ void PrintParams(float K_run){
 	printf("\t dt = %.5f\n",dt);
 	printf("\t n_runs_per_K = %d\n",n_runs);
 	printf("\n\t Start K = %.2f\n",K0);
-	printf("\t K = %.2f\n",K_run);
-	printf("\t dK = %.2f\n",dK);
+	printf("\t K = %.4f\n",K_run);
+	printf("\t dK = %.4f\n",dK);
 	printf("\t End K = %.2f\n",K_max);
 	printf("\n\t Gaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
 	printf("\t Check initial conditions? = %s\n\n", check_initial ? "True!" : "False!");
