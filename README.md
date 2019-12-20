@@ -9,3 +9,9 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
 ### Ideas:
   - Average of Fourier analysis for different K-s in order to relate coupling strenght to characteristic oscillations of the Kuramoto systems (note: averaging and then Fourier would just result in suppression of modes..)
   
+### To say in the report:
+  - Chosing coding language --> benchmarks
+  - Organization of workflow
+  - First Euler approach: full hamiltonian
+  - Second Euler approach: mean field --> lower computational times --> averaging EVERY results with good enough parameters 
+  
