@@ -47,8 +47,8 @@ float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
-void EulerStep(float *phase, float *frequencies, float K);
-double OrderParamMod(float *phases);
+void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]);
+void OrderParamMod(float *phases, double o_param[]);
 void ClearResultsFile(float K);
 void WriteResults(double ord_param, float K, float t_loop);
 //----------------------------------------------------------------------//
@@ -70,6 +70,8 @@ int main(void)
 
 	float K_range = K_max - K0;
 	int number_k_steps = K_range/dK+1;
+
+	//--------------------START K LOOP--------------------//
 	for(j=0;j<number_k_steps;j++)
 	{
 		printf("RUNNING %d/%d element in K loop\nK=%.2f",j,number_k_steps,j*dK);
@@ -83,7 +85,7 @@ int main(void)
 
 		float *phases;
 		float *ang_freqs;
-		double ord_param = 0;		
+		double ord_param[2] = {0};		
 
 		phases = RandUnifPhase();
 		if(gaussian_frequencies==true){
@@ -122,13 +124,13 @@ int main(void)
 		int T_split = (int)(T/100);
 		ClearResultsFile(K_run);
 		for(i=0;i<T+1;i++){
-			ord_param = OrderParamMod(phases);
-			WriteResults(ord_param, K_run,i);
-			EulerStep(phases, ang_freqs, K_run);
+			OrderParamMod(phases,ord_param);
+			WriteResults(ord_param[0], K_run,i);
+			EulerStep(phases, ang_freqs, K_run,ord_param);
 			
 			if(i%T_split==0){
 				printf("\n\tProcess at %d/100, K=%.2f\n", 100*(int)(i)/T,K_run);
-				printf("\tOrder parameter = %.5f\n",ord_param);
+				printf("\tOrderParameter Modulus = %.5f\n",ord_param[0]);
 				}
 
 		}
@@ -224,7 +226,8 @@ float PeriodicPosition(float angular_pos){
 	return angular_pos;
 }
 
-double OrderParamMod(float *phases){
+void OrderParamMod(float *phases, double o_par[])
+{
 		int i;
     	double real_ord_param = 0;
     	double imag_ord_param = 0;
@@ -234,40 +237,23 @@ double OrderParamMod(float *phases){
 			real_ord_param += iN*cos(phases[i]);
 			imag_ord_param += iN*sin(phases[i]);
 		}
-		return sqrt(real_ord_param*real_ord_param+imag_ord_param*imag_ord_param);
+
+		o_par[0] = sqrt(real_ord_param*real_ord_param+imag_ord_param*imag_ord_param); //modulus
+ 		o_par[1] = 2*atan(imag_ord_param/(o_par[0]+real_ord_param));
 }
 
 //Frequency order parameter!
 
 
-void EulerStep(float *phases, float *ang_freqs, float K){
-	int i,j;
-
-	float phase_updated[N] = {0} ; 
-	float frequencies_updated[N] = {0} ; 
-	float sum_term = 0.;
+void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]){
+	int i;
 	double iN = 1./((double)N);
   	for(i = 0;i < N; i++)
   	{	
-  		sum_term = 0;
-  		//Copy initial phase
-  		phase_updated[i] = phases[i];
-  		//Perform evaluation of additional term
-  		for(j = 0;j < N; j++)
-  			{
-  				sum_term += sin(phases[j]-phases[i]); //check if real sines
-  			}
-  			sum_term = sum_term*K*iN;
-  		frequencies_updated[i]=ang_freqs[i] + sum_term;
-  		phase_updated[i] +=  frequencies_updated[i]*dt;
+  		ang_freqs[i] +=  K*o_par[0]*sin(o_par[1]-phases[i]);
+  		phases[i] += dt*ang_freqs[i];
+  		phases[i] = PeriodicPosition(phases[i]);
   	}
-
-  	for(i = 0; i < N;i++)
-  	{
-  		phases[i] = PeriodicPosition(phase_updated[i]);
-  		ang_freqs[i] = frequencies_updated[i];
-  	}	
-
 }
 
 void CreateResultsFolder(){
