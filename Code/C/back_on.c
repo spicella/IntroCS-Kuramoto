@@ -15,18 +15,18 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 50	 //Number of Kuramoto oscillators
+	#define N 1000	 //Number of Kuramoto oscillators
 	#define n_runs 10 //Number of runs per given K
 	#define dt .001 //Time step
-	#define T 5000 //End of simulation time
+	#define T 30000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 1.
-	#define dK .5
-	#define K_max 2. //
+	#define K0 .0
+	#define dK .2
+	#define K_max 5. //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -75,7 +75,7 @@ int main(void)
 	//--------------------START K LOOP--------------------//
 	for(j=0;j<number_k_steps;j++)
 	{
-		printf("RUNNING %d/%d element in K loop\nK=%.4f",j,number_k_steps,j*dK);
+		printf("\t\tRUNNING %d/%d element in K loop\n\t\tK=%.4f",j,number_k_steps,j*dK);
 		clock_t begin_k_loop = clock();
 
 		float K_run = K0+j*dK;
@@ -95,7 +95,7 @@ int main(void)
 			//----------------------START MULTIPLE RUNS LOOP----------------------//
 			for(k=0;k<n_runs;k++){
 				printf("_________________________________________________\n\n");
-				printf("\t\tRUN %d/%d, K = %.4f (%d/%d)\n",k+1,n_runs,K_run,j+1,number_k_steps);
+				printf("\t\tK = %.4f (%d/%d), RUN %d/%d, \n",K_run,j+1,number_k_steps,k+1,n_runs);
 				printf("_________________________________________________\n");
 				//Initialize phases and frequencies
 				phases = RandUnifPhase();
@@ -108,9 +108,11 @@ int main(void)
 
 					//----------------------START SINGLE RUN LOOP----------------------//
 						//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
-							int T_split = (int)(T/3);
+							int T_split = (int)(T/5);
 							ClearResultsFile(K_run);
+							clock_t begin_single_loop = clock();
 							for(i=0;i<T+1;i++){
+
 								OrderParam(phases,ord_param_acc[k][i]);
 								EulerStep(phases, ang_freqs, K_run,ord_param_acc[k][i]);
 								
@@ -118,9 +120,12 @@ int main(void)
 									printf("\n\tProcess at %d/100, K=%.4f\n", 100*(int)(i)/T,K_run);
 									printf("\tOrderParameter Modulus = %.5f\n",ord_param_acc[k][i][0]);
 									printf("\tOrderParameter Phase = %.5f\n",ord_param_acc[k][i][1]);
-
 									}
 							}
+						clock_t stop_single_loop = clock();
+						double T_loop_time_spent = (double)(stop_single_loop - begin_single_loop) / CLOCKS_PER_SEC;
+						printf("\n\tLoop time on single run =  %.5f seconds\n\n",T_loop_time_spent);
+
 					//----------------------END SINGLE RUN LOOP----------------------//
 				}
 				int ii,kk;		
@@ -143,11 +148,10 @@ int main(void)
 					WriteResults(ord_param[ii], K_run, ii);
 				}
 			//----------------------END MULTIPLE RUNS LOOP----------------------//
-			
-			PrintParams(K_run);
-			clock_t inner_loop_end = clock();
-		double loop_time_spent = (double)(inner_loop_end - begin_k_loop) / CLOCKS_PER_SEC;
-		printf("\tLoop time on %d runs: %.5f seconds\n\n",n_runs,loop_time_spent);
+
+		clock_t inner_loop_end = clock();
+		double K_loop_time_spent = (double)(inner_loop_end - begin_k_loop) / CLOCKS_PER_SEC;
+		printf("\tLoop time on %d runs: %.5f seconds\n\n",n_runs,K_loop_time_spent);
 		//----------------------END SINGLE K LOOP----------------------//
 	}
 	clock_t outer_loop_end = clock();
@@ -167,15 +171,16 @@ int main(void)
 
 void PrintParams(float K_run){
 	printf("\n\n\n//------------------------Input parameters------------------------//\n");
-	printf("\t-------> Number of Oscillators = %d\n",N);
-	printf("\t-------> Runtime simulation = %d\n",T);
-	printf("\t-------> Start K = %.2f\n",K0);
-	printf("\t-------> K = %.2f\n",K_run);
-	printf("\t-------> dK = %.2f\n",dK);
-	printf("\t-------> End K = %.2f\n",K_max);
-	printf("\t-------> dt = %.5f\n",dt);
-	printf("\t-------> Gaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
-	printf("\t-------> Check initial conditions? = %s\n", check_initial ? "True!" : "False!");
+	printf("\n\t Number of Oscillators = %d\n",N);
+	printf("\t Runtime simulation = %d\n",T);
+	printf("\t dt = %.5f\n",dt);
+	printf("\t n_runs_per_K = %d\n",n_runs);
+	printf("\n\t Start K = %.2f\n",K0);
+	printf("\t K = %.2f\n",K_run);
+	printf("\t dK = %.2f\n",dK);
+	printf("\t End K = %.2f\n",K_max);
+	printf("\n\t Gaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
+	printf("\t Check initial conditions? = %s\n\n", check_initial ? "True!" : "False!");
 	printf("//----------------------------------------------------------------//\n\n\n");
 }
 
