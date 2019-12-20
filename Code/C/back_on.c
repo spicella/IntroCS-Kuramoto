@@ -16,17 +16,17 @@
 	#define turn_angle  2.*M_PI
 //Main parameters
 	#define N 1000	 //Number of Kuramoto oscillators
-	#define n_runs 10 //Number of runs per given K
+	#define n_runs 5 //Number of runs per given K
 	#define dt .001 //Time step
-	#define T 30000 //End of simulation time
+	#define T 10000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
 	#define K0 .0
-	#define dK .2
-	#define K_max 5. //
+	#define dK .05
+	#define K_max .8 //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -46,12 +46,12 @@ float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
-void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]);
-void OrderParam(float *phases, double o_param[]);
+void EulerStep(float *phases, float *ang_freqs, float K, float o_par[]);
+void OrderParam(float *phases, float o_param[]);
 void ClearResultsFile(float K);
 float EvaluateMean(float *array, int len_array);
 float EvaluateStd(float *array, int len_array, float mean);
-void WriteResults(double o_par[], float K, float t_loop);
+void WriteResults(float o_par[], float K, float t_loop);
 //----------------------------------------------------------------------//
 
 
@@ -66,7 +66,7 @@ int main(void)
 	sleep(0);
 	CreateResultsFolder();
 
-	int i,j,k;
+	int i,j,k;  //i loops over time, j loops over K values, k loops over runs
 	float complex iN = (float)(1/N)+I*0; //inverse of N
 
 	float K_range = K_max - K0;
@@ -90,8 +90,8 @@ int main(void)
 			float *phases;
 			float *ang_freqs;
 
-			double ord_param[T+1][4] = {0};		
-			double ord_param_acc[n_runs][T+1][2] = {0};		
+			float ord_param[T+1][4] = {0};		
+			float ord_param_acc[n_runs][T+1][2] = {0};		
 			//----------------------START MULTIPLE RUNS LOOP----------------------//
 			for(k=0;k<n_runs;k++){
 				printf("_________________________________________________\n\n");
@@ -238,7 +238,7 @@ float PeriodicPosition(float angular_pos){
 	return angular_pos;
 }
 
-void OrderParam(float *phases, double o_par[])
+void OrderParam(float *phases, float o_par[])
 {
 		int i;
     	double real_ord_param = 0;
@@ -257,7 +257,7 @@ void OrderParam(float *phases, double o_par[])
 //Frequency order parameter!
 
 
-void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]){
+void EulerStep(float *phases, float *ang_freqs, float K, float o_par[]){
 	int i;
 	double iN = 1./((double)N);
   	for(i = 0;i < N; i++)
@@ -318,7 +318,7 @@ float EvaluateStd(float *array, int len_array, float mean){
 		return std;
 	}
 
-void WriteResults(double o_par[], float K, float t_loop){
+void WriteResults(float o_par[], float K, float t_loop){
 		/*Single shot writing of order param and freq order param (both real and complex)*/
 		int i;
 		char filename[64];
