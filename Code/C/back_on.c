@@ -15,10 +15,10 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000	 //Number of Kuramoto oscillators
+	#define N 50	 //Number of Kuramoto oscillators
 	#define n_runs 10 //Number of runs per given K
 	#define dt .001 //Time step
-	#define T 50000 //End of simulation time
+	#define T 5000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
@@ -123,27 +123,25 @@ int main(void)
 							}
 					//----------------------END SINGLE RUN LOOP----------------------//
 				}
-				int ii,kk;
-
-				//ord_param[0]-[1] => mean/std_modulus		
-				//ord_param[2]-[3] => mean/std_phase		
+				int ii,kk;		
 				float stat_modulus[n_runs] = {0}; 
 				float stat_phase[n_runs] = {0};
+				
+				//Perform means, std and save in format:
+				//ord_param[0]-[1] => mean/std_modulus		
+				//ord_param[2]-[3] => mean/std_phase
 
 				for(ii=0;ii<T+1;ii++){ //for each time step
 					for(kk=0;kk<n_runs;kk++){ //accumulate results in one vector
 						stat_modulus[kk]=ord_param_acc[kk][ii][0];
 						stat_phase[kk]=ord_param_acc[kk][ii][1];
-
 					}
-					//perform means, std and save 
 					ord_param[ii][0] = EvaluateMean(stat_modulus,n_runs);
 					ord_param[ii][1] = EvaluateStd(stat_modulus,n_runs,ord_param[ii][0]);
 					ord_param[ii][2] = EvaluateMean(stat_phase,n_runs);
 					ord_param[ii][3] = EvaluateStd(stat_phase,n_runs,ord_param[ii][2]);
 					WriteResults(ord_param[ii], K_run, ii);
 				}
-
 			//----------------------END MULTIPLE RUNS LOOP----------------------//
 			
 			PrintParams(K_run);
