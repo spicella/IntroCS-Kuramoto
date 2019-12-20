@@ -15,18 +15,18 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 100	 //Number of Kuramoto oscillators
+	#define N 200	 //Number of Kuramoto oscillators
 	
 	#define dt .001 //Time step
-	#define T 100000 //End of simulation time
+	#define T 20000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 .8
-	#define dK .2
-	#define K_max 1 //
+	#define K0 0.
+	#define dK .1
+	#define K_max 5. //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -48,10 +48,9 @@ float * RandUnifFreq();
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
 void EulerStep(float *phase, float *frequencies, float K);
-float complex OrderParam(float *phases);
-float complex FreqOrderParam(float *ang_freqs);
+double OrderParamMod(float *phases);
 void ClearResultsFile(float K);
-void WriteResults(float complex ord_param, float complex freq_ord_param, float K, float t_loop);
+void WriteResults(double ord_param, float K, float t_loop);
 //----------------------------------------------------------------------//
 
 
@@ -84,9 +83,7 @@ int main(void)
 
 		float *phases;
 		float *ang_freqs;
-		double complex ord_param = 0 + 0 * I;
-		double freq_ord_param = 0 + 0 * I;
-		
+		double ord_param = 0;		
 
 		phases = RandUnifPhase();
 		if(gaussian_frequencies==true){
@@ -122,20 +119,19 @@ int main(void)
 	}
 		//----------------------START SINGLE RUN LOOP----------------------//
 		//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
-		int T_split = (int)(T);
+		int T_split = (int)(T/100);
 		ClearResultsFile(K_run);
 		for(i=0;i<T+1;i++){
-
-				printf("\n\tProcess at %d/100, K=%.2f\n", 100*(int)(i)/T,K_run);
-				ord_param = OrderParam(phases);
-				printf("\tOrder parameter = %.3f + %.3fi\n", creal(ord_param),cimag(ord_param));
-				freq_ord_param = OrderParam(ang_freqs);
-				printf("\tFreq Order parameter = %.3f + %.3fi\n", creal(freq_ord_param),cimag(freq_ord_param));
-
-			WriteResults(ord_param, freq_ord_param, K_run,i);
+			ord_param = OrderParamMod(phases);
+			WriteResults(ord_param, K_run,i);
 			EulerStep(phases, ang_freqs, K_run);
-		}
+			
+			if(i%T_split==0){
+				printf("\n\tProcess at %d/100, K=%.2f\n", 100*(int)(i)/T,K_run);
+				printf("\tOrder parameter = %.5f\n",ord_param);
+				}
 
+		}
 		//----------------------END SINGLE RUN LOOP----------------------//
 
 		//List of input parameters
@@ -162,12 +158,15 @@ int main(void)
 
 void PrintParams(float K_run){
 	printf("\n\n\n//------------------------Input parameters------------------------//\n");
-	printf("//\t\tNumber of Oscillators = %d\n",N);
-	printf("//\t\tRuntime simulation = %d\n",T);
-	printf("//\t\tK = %.2f\n",K_run);
-	printf("//\t\tdt = %.5f\n",dt);
-	printf("//\t\tGaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
-	printf("//\t\tCheck initial conditions? = %s\n", check_initial ? "True!" : "False!");
+	printf("\t-------> Number of Oscillators = %d\n",N);
+	printf("\t-------> Runtime simulation = %d\n",T);
+	printf("\t-------> Start K = %.2f\n",K0);
+	printf("\t-------> K = %.2f\n",K_run);
+	printf("\t-------> dK = %.2f\n",dK);
+	printf("\t-------> End K = %.2f\n",K_max);
+	printf("\t-------> dt = %.5f\n",dt);
+	printf("\t-------> Gaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
+	printf("\t-------> Check initial conditions? = %s\n", check_initial ? "True!" : "False!");
 	printf("//----------------------------------------------------------------//\n\n\n");
 }
 
@@ -225,26 +224,21 @@ float PeriodicPosition(float angular_pos){
 	return angular_pos;
 }
 
-float complex OrderParam(float *phases){
+double OrderParamMod(float *phases){
 		int i;
-    	double complex ord_param = 0 + 0 * I;
+    	double real_ord_param = 0;
+    	double imag_ord_param = 0;
+    	double iN = 1./((double)N);
 		for(i = 0;i < N; i++)
 		{
-			ord_param += cexp(I*phases[i]);
-			//printf("Inside OrderParam = %.2f+I%.2f\n",creal(ord_param),cimag(ord_param));
+			real_ord_param += iN*cos(phases[i]);
+			imag_ord_param += iN*sin(phases[i]);
 		}
-		return ord_param;
+		return sqrt(real_ord_param*real_ord_param+imag_ord_param*imag_ord_param);
 }
 
-float complex FreqOrderParam(float *ang_freqs){
-		int i;
-    	double complex freq_ord_param = 0 + 0 * I;
-		for(i = 0;i < N; i++)
-		{
-			freq_ord_param += cexp(I*ang_freqs[i]);
-		}
-		return freq_ord_param;
-}
+//Frequency order parameter!
+
 
 void EulerStep(float *phases, float *ang_freqs, float K){
 	int i,j;
@@ -252,8 +246,7 @@ void EulerStep(float *phases, float *ang_freqs, float K){
 	float phase_updated[N] = {0} ; 
 	float frequencies_updated[N] = {0} ; 
 	float sum_term = 0.;
-	float floatN;
-	floatN = (float)N;
+	double iN = 1./((double)N);
   	for(i = 0;i < N; i++)
   	{	
   		sum_term = 0;
@@ -264,7 +257,7 @@ void EulerStep(float *phases, float *ang_freqs, float K){
   			{
   				sum_term += sin(phases[j]-phases[i]); //check if real sines
   			}
-  			sum_term = sum_term*(K/floatN);
+  			sum_term = sum_term*K*iN;
   		frequencies_updated[i]=ang_freqs[i] + sum_term;
   		phase_updated[i] +=  frequencies_updated[i]*dt;
   	}
@@ -304,7 +297,7 @@ void ClearResultsFile(float K){
       		printf("Unable to delete the file"); 
 }
 
-void WriteResults(float complex ord_param, float complex freq_ord_param, float K, float t_loop){
+void WriteResults(double ord_param, float K, float t_loop){
 		/*Single shot writing of order param and freq order param (both real and complex)*/
 		int i;
 		char filename[64];
@@ -317,8 +310,7 @@ void WriteResults(float complex ord_param, float complex freq_ord_param, float K
 		}
 		out = fopen( filename, "a");
 		//fprintf(out, "%.20f\t%.20f\t%.20f\t%.20f\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
-		fprintf(out,"%.4f\t%.20f\t%.20f\t%.20f\t%.20f\t\n",t_loop*dt,creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
-
+		fprintf(out,"%.5f\t%.20f\n",t_loop*dt, ord_param);
 		fclose(out);
 
 }
