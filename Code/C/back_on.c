@@ -15,10 +15,10 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 200	 //Number of Kuramoto oscillators
+	#define N 1000	 //Number of Kuramoto oscillators
 	
 	#define dt .001 //Time step
-	#define T 20000 //End of simulation time
+	#define T 30000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
@@ -50,7 +50,7 @@ float PeriodicPosition(float angular_pos);
 void EulerStep(float *phases, float *ang_freqs, float K, double o_par[]);
 void OrderParamMod(float *phases, double o_param[]);
 void ClearResultsFile(float K);
-void WriteResults(double ord_param, float K, float t_loop);
+void WriteResults(double o_par[], float K, float t_loop);
 //----------------------------------------------------------------------//
 
 
@@ -125,7 +125,7 @@ int main(void)
 		ClearResultsFile(K_run);
 		for(i=0;i<T+1;i++){
 			OrderParamMod(phases,ord_param);
-			WriteResults(ord_param[0], K_run,i);
+			WriteResults(ord_param, K_run,i);
 			EulerStep(phases, ang_freqs, K_run,ord_param);
 			
 			if(i%T_split==0){
@@ -283,7 +283,7 @@ void ClearResultsFile(float K){
       		printf("Unable to delete the file"); 
 }
 
-void WriteResults(double ord_param, float K, float t_loop){
+void WriteResults(double o_par[], float K, float t_loop){
 		/*Single shot writing of order param and freq order param (both real and complex)*/
 		int i;
 		char filename[64];
@@ -296,7 +296,7 @@ void WriteResults(double ord_param, float K, float t_loop){
 		}
 		out = fopen( filename, "a");
 		//fprintf(out, "%.20f\t%.20f\t%.20f\t%.20f\n", creal(ord_param)/N,cimag(ord_param)/N,creal(freq_ord_param)/N,cimag(freq_ord_param)/N);
-		fprintf(out,"%.5f\t%.20f\n",t_loop*dt, ord_param);
+		fprintf(out,"%.5f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1]);
 		fclose(out);
 
 }
