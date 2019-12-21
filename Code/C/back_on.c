@@ -24,7 +24,7 @@
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 .0
+	#define K0 .0010
 	#define dK .0001
 	#define K_max .05 //
 	#define PATH_MAX 1000
@@ -81,17 +81,12 @@ int main(void)
 		//printf("%s", results_path);
 		PrintParams(K_run);
 
-
-
-		//--------------------START K LOOP--------------------//
-			//Declarations
-
-			float *phases;
-			float *ang_freqs;
-
-			float ord_param[T+1][4] = {0};		
-			float ord_param_acc[n_runs][T+1][2] = {0};		
-			//----------------------START MULTIPLE RUNS LOOP----------------------//
+		//Declarations
+		float *phases;
+		float *ang_freqs;
+		float ord_param[T+1][4] = {0};		
+		float ord_param_acc[n_runs][T+1][2] = {0};		
+		//----------------------START MULTIPLE RUNS LOOP----------------------//
 			for(k=0;k<n_runs;k++){
 				clock_t check_elapsed_time = clock();
 				double check_elapsed = (double)(check_elapsed_time - begin_main) / CLOCKS_PER_SEC;
@@ -151,7 +146,7 @@ int main(void)
 					ord_param[ii][3] = EvaluateStd(stat_phase,n_runs,ord_param[ii][2]);
 					WriteResults(ord_param[ii], K_run, ii);
 				}
-			//----------------------END MULTIPLE RUNS LOOP----------------------//
+		//----------------------END MULTIPLE RUNS LOOP----------------------//
 
 		clock_t inner_loop_end = clock();
 		double K_loop_time_spent = (double)(inner_loop_end - begin_k_loop) / CLOCKS_PER_SEC;
@@ -165,11 +160,6 @@ int main(void)
 	printf("Total execution time: %.5f seconds\n\n",total_time_spent);
   	return 0;
 }
-
-
-
-
-
 
 //-----------------------------------Function implementations-----------------------------------//
 
