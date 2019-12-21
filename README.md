@@ -14,4 +14,6 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
   - Organization of workflow
   - First Euler approach: full hamiltonian
   - Second Euler approach: mean field --> lower computational times --> averaging EVERY results with good enough parameters 
+  #### Issues:
+    - Controlling random: not too fast! [not working on smaller simulations]
   
