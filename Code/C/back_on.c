@@ -15,18 +15,18 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 1000	 //Number of Kuramoto oscillators
+	#define N 250	 //Number of Kuramoto oscillators
 	#define n_runs 5 //Number of runs per given K
-	#define dt .001 //Time step
-	#define T 50000 //End of simulation time
+	#define dt .005 //Time step
+	#define T 10000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 .0010
-	#define dK .0001
-	#define K_max .05 //
+	#define K0 1.
+	#define dK 1.
+	#define K_max 1.1 //
 	#define PATH_MAX 1000
 //---------------------------End Definitions-------------------------//
 
@@ -73,7 +73,7 @@ int main(void)
 	int number_k_steps = K_range/dK;
 
 	//--------------------START K LOOP--------------------//
-	for(j=0;j<number_k_steps;j++)
+	for(j=0;j<number_k_steps+1;j++)
 	{
 		clock_t begin_k_loop = clock();
 
@@ -90,12 +90,12 @@ int main(void)
 			for(k=0;k<n_runs;k++){
 				clock_t check_elapsed_time = clock();
 				double check_elapsed = (double)(check_elapsed_time - begin_main) / CLOCKS_PER_SEC;
-				
-
-				printf("____________________________________________________________\n\n");
+			
+				printf("_________________________________________________________________\n\n");
 				printf("\t\tK = %.4f (%d/%d), RUN %d/%d, \n",K_run,j+1,number_k_steps,k+1,n_runs);
 				printf("\t\tTotal elapsed time =  %.5f seconds\n",check_elapsed);
-				printf("____________________________________________________________\n");
+				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k,number_k_steps*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
+				printf("_________________________________________________________________\n");
 				//Initialize phases and frequencies
 				phases = RandUnifPhase();
 				if(gaussian_frequencies==true){
@@ -279,10 +279,10 @@ void ClearResultsFile(float K){
 		char filename[64];
 		FILE *out;
 		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_K%.4f.tsv", N,T,dt,K);
+			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_K%.4f.tsv", N,T,dt,K);
+			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
 		}		if (remove(filename) == 0) 
       		printf("Deleted successfully"); 
    		else
@@ -318,10 +318,10 @@ void WriteResults(float o_par[], float K, float t_loop){
 		char filename[64];
 		FILE *out;
 		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_K%.4f.tsv", N,T,dt,K);
+			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_K%.4f.tsv", N,T,dt,K);
+			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
 		}
 		out = fopen( filename, "a");
 		fprintf(out,"%.5f\t%.20f\t%.20f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1],o_par[3],o_par[4]);
