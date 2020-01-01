@@ -28,9 +28,8 @@
 	#define dK .5
 	#define K_max 2. //
 	#define PATH_MAX 1000
-
 //For Watts-Strogatz bonus part
-	#define r_WS  4 //(x2)
+	#define r_WS  4 //(already x2)
 	struct adj_edges{
 		int from [N*r_WS];
 		int to [N*r_WS];
@@ -45,7 +44,6 @@
 	bool gaussian_frequencies = true;
 	//ODE + sweeping K
 	bool sweeping_K = false;
-
 
 //-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
@@ -106,9 +104,8 @@ int main(void)
 				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k,number_k_steps*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
 				printf("_________________________________________________________________\n");
 				//Initialize phases and frequencies
-				phases = RandUnifPhase(); ///LAVORARE QUI!!
-				//phases = ConstVal(0); ///LAVORARE QUI!!
-				//sleep(2);
+				phases = RandUnifPhase(); 
+				//phases = ConstVal(0); 
 				if(gaussian_frequencies==true){
 					ang_freqs= RandGauss();
 				}
@@ -135,7 +132,6 @@ int main(void)
 				}
 				//exit(0);
 					//----------------------START SINGLE RUN LOOP----------------------//
-						//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
 							int T_split = (int)(T/5);
 							ClearResultsFile(K_run);
 							clock_t begin_single_loop = clock();
@@ -402,7 +398,7 @@ struct adj_edges read_adj_netw(float p){
          printf( "\n\nALERT: File %s could not be opened\n\n",cwd);
 
     }
-    }
+    
     printf("\nNow reading from file..\n");
 	for(i=0; i<N*r_WS;i++)
 	    {
@@ -410,6 +406,7 @@ struct adj_edges read_adj_netw(float p){
 	    }
 	fclose(fp);
     return edges;
+}
 
     //CODE FOR READING FROM FILE AND SAVING ARRAY OF EDGES MAP FOR DIFFERENT P VALUES
  //    int i,k;
@@ -423,5 +420,3 @@ struct adj_edges read_adj_netw(float p){
  // 		//		printf("%d-->%d\n",edges[k].from[i],edges[k].to[i]);
  // 		//	}
 	// }
-
-}
