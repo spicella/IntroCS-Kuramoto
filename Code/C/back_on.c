@@ -24,15 +24,23 @@
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 1.
-	#define dK 1.
-	#define K_max 1.1 //
+	#define K0 0.
+	#define dK .5
+	#define K_max 2. //
 	#define PATH_MAX 1000
+
+//For Watts-Strogatz bonus part
+	#define r_WS  4 //(x2)
+	struct adj_edges{
+		int from [N*r_WS];
+		int to [N*r_WS];
+	};
+	float p_list[] = {0.00,0.30,0.5,1.00}; 
 //---------------------------End Definitions-------------------------//
 
 //Run bools:
 	//check values for initial configurations:
-	bool check_initial = false;
+	bool check_initial = true;
 	//Gaussian distributed frequencies [N(0,1)]
 	bool gaussian_frequencies = true;
 	//ODE + sweeping K
@@ -42,6 +50,7 @@
 //-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
 void PrintParams(float K_run);
+float * ConstVal( float value);
 float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
@@ -52,6 +61,7 @@ void ClearResultsFile(float K);
 float EvaluateMean(float *array, int len_array);
 float EvaluateStd(float *array, int len_array, float mean);
 void WriteResults(float o_par[], float K, float t_loop);
+struct adj_edges read_adj_netw(float p); //for bonus part
 //----------------------------------------------------------------------//
 
 
@@ -78,7 +88,6 @@ int main(void)
 		clock_t begin_k_loop = clock();
 
 		float K_run = K0+j*dK;
-		//printf("%s", results_path);
 		PrintParams(K_run);
 
 		//Declarations
@@ -97,7 +106,9 @@ int main(void)
 				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k,number_k_steps*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
 				printf("_________________________________________________________________\n");
 				//Initialize phases and frequencies
-				phases = RandUnifPhase();
+				phases = RandUnifPhase(); ///LAVORARE QUI!!
+				//phases = ConstVal(0); ///LAVORARE QUI!!
+				//sleep(2);
 				if(gaussian_frequencies==true){
 					ang_freqs= RandGauss();
 				}
@@ -105,6 +116,24 @@ int main(void)
 					ang_freqs= RandUnifFreq();
 				}
 
+				if(check_initial==true){
+					float mean_phases = 0;
+					float std_phases = 0;		
+
+					float mean_freqs = 0;
+					float std_freqs = 0;
+
+					mean_phases = EvaluateMean(phases,N);
+					mean_freqs = EvaluateMean(ang_freqs,N);
+
+					printf("\nMean Phases0  = %.5f\n",mean_phases);
+					printf("\nMean Freqs0 = %.5f\n",mean_freqs);
+					std_phases = EvaluateStd(phases,N,mean_phases);
+					std_freqs = EvaluateStd(ang_freqs,N,mean_freqs);
+					printf("\nStd Phases0 = %.5f\n",std_phases);
+					printf("\nStd Freqs0 = %.5f\n\n",std_freqs);
+				}
+				//exit(0);
 					//----------------------START SINGLE RUN LOOP----------------------//
 						//printf("InitialPhase=%.5f,\tInitialFrequency%.5f\n",phases[N-1],ang_freqs[N-1]);
 							int T_split = (int)(T/5);
@@ -178,15 +207,23 @@ void PrintParams(float K_run){
 	printf("//----------------------------------------------------------------//\n\n\n");
 }
 
-float * RandUnifPhase( ) {
+float * RandUnifPhase() {
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
-    float max_freq = 5; //if max2pi=false, the resulting random uniform distrib will be in [-max_freq,max_freq]
-    srand( (unsigned)time(NULL) );
+    float max_phase = (float)2.*M_PI; 
 	    for ( i = 0; i < N; ++i){
-	      		r[i] = ((float)rand()/(float)(RAND_MAX)) * turn_angle;
+	      		r[i] = ((float)rand()/(float)(RAND_MAX))* max_phase;
 	    	}
+    return r;
+}
+
+float * ConstVal( float value ){
+    static float r[N];
+    int i;
+    for ( i = 0; i < N; ++i) {
+		r[i] = value;
+    }
     return r;
 }
 
@@ -194,10 +231,9 @@ float * RandUnifFreq( ){
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
-    float max_freq = 5; //if max2pi=false, the resulting random uniform distrib will be in [-max_freq,max_freq]
-    srand( (unsigned)time(NULL) );
+    float max_freq = 5; 
     for ( i = 0; i < N; ++i) {
-		r[i] = ((float)rand()/(float)(RAND_MAX)) * max_freq -max_freq*.5;
+		r[i] = ((float)rand()/(float)(RAND_MAX)) * max_freq - max_freq*.5;
     }
     return r;
 }
@@ -205,12 +241,10 @@ float * RandUnifFreq( ){
 float * RandGauss(  ){
 	/*https://www.doc.ic.ac.uk/~wl/papers/07/csur07dt.pdf for gaussian array generation*/
 	/*Box-Muller transform*/
-	srand( (unsigned)time(NULL) );
-
     static float r[N];
     float U1,U2,sqrt_term,phase;
     int i;
-    for ( i = 0; i < N/2; ++i){
+    for ( i = 0; i < N/2; ++i){  //N/2 as this method returns couples of random gaussian distributed numbers
       	U1 = ((float)rand()/(float)(RAND_MAX));
       	U2 = ((float)rand()/(float)(RAND_MAX));
       	
@@ -326,4 +360,68 @@ void WriteResults(float o_par[], float K, float t_loop){
 		out = fopen( filename, "a");
 		fprintf(out,"%.5f\t%.20f\t%.20f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1],o_par[3],o_par[4]);
 		fclose(out);
+}
+
+//For bonus part
+struct adj_edges read_adj_netw(float p){
+    //Get path for results of Python simulation of Watts-Strogatz
+    static char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+       //printf("Current working dir: %s\n", cwd);
+    } else {
+       perror("getcwd() error");
+    }
+    //Get filename for the edges list
+
+  	if(p==0 || p==1){
+  		if (p==0){
+  		strcat(cwd, "/results_WS/extended_adj_mat_p=");
+	    strcat(cwd,"0.00"); 
+	    strcat(cwd,".csv"); 
+		}
+		else{
+		strcat(cwd, "/results_WS/extended_adj_mat_p=");
+		strcat(cwd,"1.00"); 
+		strcat(cwd,".csv"); 
+		}
+  	}
+  	else{
+  		int decimal, sign;  //needed
+		strcat(cwd, "/results_WS/extended_adj_mat_p=0.");
+		char *buffer = ecvt(p, 2, &decimal, &sign);
+	    strcat(cwd,buffer); 
+	    strcat(cwd,".csv"); 
+	}
+   	printf("Filename: %s\n", cwd);
+
+    //Read data and store in struc
+	int i;
+    struct adj_edges edges;
+    FILE *fp; 
+	if ( ( fp = fopen(cwd, "rb" ) ) == NULL ){
+         printf( "\n\nALERT: File %s could not be opened\n\n",cwd);
+
+    }
+    }
+    printf("\nNow reading from file..\n");
+	for(i=0; i<N*r_WS;i++)
+	    {
+	    	fscanf(fp, "%d,%d\n",&edges.from[i],&edges.to[i]);
+	    }
+	fclose(fp);
+    return edges;
+
+    //CODE FOR READING FROM FILE AND SAVING ARRAY OF EDGES MAP FOR DIFFERENT P VALUES
+ //    int i,k;
+ //    struct adj_edges edges[sizeof(p_list)/sizeof(p_list[0])]; //for each of the p simulated
+ 	
+ // 	for(k=0; k<sizeof(p_list)/sizeof(p_list[0]-1);k++)	//k loop, for each of the p value analyzed, up to cardinality of p_list
+ // 	{
+ // 		edges[k]=read_adj_netw(p_list[k]);
+ // 		//for(i=0; i<N*r;i++)	//i loop, for each edge
+ // 		//	{
+ // 		//		printf("%d-->%d\n",edges[k].from[i],edges[k].to[i]);
+ // 		//	}
+	// }
+
 }
