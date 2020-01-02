@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[47]:
 
 
 import pandas as pd
@@ -13,7 +13,7 @@ plt.style.use("seaborn-darkgrid")
 import os
 
 
-# In[43]:
+# In[222]:
 
 
 def coordinates_on_circle(n):
@@ -194,17 +194,25 @@ def create_strogatz(n, r ,p, place_labels=False ):
     return adj_mat
 
 def write_extended(adj,p_ext):
+    """Write the edge list and the associated degree for each vertex
+    Starting from an adjacency matrix and the p value used (just for outputting the right name)
+    col[0]-->from, col[1]-->to, col[2]-->freq"""
     result = []
     for i in range(0,n): #rows
         for j in range(0,n): #cols
             if(adj[i][j] == True):
-                result.append([i,j])  
-    result = pd.DataFrame(result,index=None,columns=['','']) #columns: [from,to]
+                result.append([i,j,0])#third column is the degree of distribution for each vertex, useful for c computation  
+    result = pd.DataFrame(result,index=None,columns=['from','to','freq']) #columns: [from,to]
+    a = result.iloc[:,0:1]
+    b = a.apply(pd.value_counts, sort=False)
+    b['index'] = b.index
+    for i in range(0,len(a)):
+        result['freq'][i]=(b.iloc[a.iloc[i,0]][0])
     result.to_csv(path+results_dir+"/extended_adj_mat_p=%.2f.csv"%(p_ext),header=False, index=False)
     return result
 
 
-# In[44]:
+# In[219]:
 
 
 path = os.getcwd()
@@ -219,15 +227,8 @@ for i in p_list:
     write_extended(adj_mat,i)
 
 
-# In[45]:
-
-
-
-p_list
-
-
 # In[ ]:
 
 
-
+write_extended()
 
