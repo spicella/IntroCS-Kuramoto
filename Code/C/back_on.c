@@ -18,7 +18,7 @@
 	#define N 250	 //Number of Kuramoto oscillators
 	#define n_runs 5 //Number of runs per given K
 	#define dt .005 //Time step
-	#define T 10000 //End of simulation time
+	#define T 2000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
@@ -33,6 +33,7 @@
 	struct adj_edges{
 		int from [N*r_WS];
 		int to [N*r_WS];
+		int dist_deg[N*r_WS];
 	};
 	float p_list[] = {0.00,0.30,0.5,1.00}; 
 //---------------------------End Definitions-------------------------//
@@ -101,7 +102,7 @@ int main(void)
 				printf("_________________________________________________________________\n\n");
 				printf("\t\tK = %.4f (%d/%d), RUN %d/%d, \n",K_run,j+1,number_k_steps,k+1,n_runs);
 				printf("\t\tTotal elapsed time =  %.5f seconds\n",check_elapsed);
-				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k,number_k_steps*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
+				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k+1,(number_k_steps+1)*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
 				printf("_________________________________________________________________\n");
 				//Initialize phases and frequencies
 				phases = RandUnifPhase(); 
@@ -402,7 +403,7 @@ struct adj_edges read_adj_netw(float p){
     printf("\nNow reading from file..\n");
 	for(i=0; i<N*r_WS;i++)
 	    {
-	    	fscanf(fp, "%d,%d\n",&edges.from[i],&edges.to[i]);
+	    	fscanf(fp, "%d,%d,%d\n",&edges.from[i],&edges.to[i],&edges.dist_deg[i]);
 	    }
 	fclose(fp);
     return edges;
