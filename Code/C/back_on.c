@@ -16,16 +16,16 @@
 	#define turn_angle  2.*M_PI
 //Main parameters
 	#define N 250	 //Number of Kuramoto oscillators
-	#define n_runs 5 //Number of runs per given K
+	#define n_runs 10 //Number of runs per given K
 	#define dt .005 //Time step
-	#define T 2000 //End of simulation time
+	#define T 10000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
 	#define K0 0.
-	#define dK .5
+	#define dK .1
 	#define K_max 2. //
 	#define PATH_MAX 1000
 //For Watts-Strogatz bonus part
@@ -42,7 +42,7 @@
 	//check values for initial configurations:
 	bool check_initial = true;
 	//Gaussian distributed frequencies [N(0,1)]
-	bool gaussian_frequencies = true;
+	bool gaussian_frequencies = false;
 	//ODE + sweeping K
 	bool sweeping_K = false;
 
@@ -105,8 +105,8 @@ int main(void)
 				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k+1,(number_k_steps+1)*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
 				printf("_________________________________________________________________\n");
 				//Initialize phases and frequencies
-				phases = RandUnifPhase(); 
-				//phases = ConstVal(0); 
+				//phases = RandUnifPhase(); 
+				phases = ConstVal(0); 
 				if(gaussian_frequencies==true){
 					ang_freqs= RandGauss();
 				}
@@ -168,7 +168,12 @@ int main(void)
 					}
 					ord_param[ii][0] = EvaluateMean(stat_modulus,n_runs);
 					ord_param[ii][1] = EvaluateStd(stat_modulus,n_runs,ord_param[ii][0]);
-					ord_param[ii][2] = EvaluateMean(stat_phase,n_runs);
+						
+						//	Choose not to use 2π periodicity here so that std is not affected, 
+						//	in post processing the Psi will undergo mod(2π) before filling the plots
+						//	while std won't
+					
+					ord_param[ii][2] = EvaluateMean(stat_phase,n_runs); 
 					ord_param[ii][3] = EvaluateStd(stat_phase,n_runs,ord_param[ii][2]);
 					WriteResults(ord_param[ii], K_run, ii);
 				}
@@ -208,9 +213,9 @@ float * RandUnifPhase() {
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
-    float max_phase = (float)2.*M_PI; 
+    float max_phase = (float) 2*M_PI; 
 	    for ( i = 0; i < N; ++i){
-	      		r[i] = ((float)rand()/(float)(RAND_MAX))* max_phase;
+	      		r[i] = ((float)rand()/(float)(RAND_MAX)) * max_phase - max_phase*.5; //here something wrong with radians/angle conversion is happening
 	    	}
     return r;
 }
@@ -228,7 +233,7 @@ float * RandUnifFreq( ){
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
-    float max_freq = 5; 
+    float max_freq = .5; 
     for ( i = 0; i < N; ++i) {
 		r[i] = ((float)rand()/(float)(RAND_MAX)) * max_freq - max_freq*.5;
     }
@@ -310,10 +315,10 @@ void ClearResultsFile(float K){
 		char filename[64];
 		FILE *out;
 		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
+			sprintf(filename, "results/gfreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
+			sprintf(filename, "results/ufreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
 		}		if (remove(filename) == 0) 
       		printf("Deleted successfully"); 
    		else
@@ -349,13 +354,13 @@ void WriteResults(float o_par[], float K, float t_loop){
 		char filename[64];
 		FILE *out;
 		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
+			sprintf(filename, "results/gfreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_T%d_dt%.8f_nruns%d_K%.4f.tsv", N,T,dt,n_runs,K);
+			sprintf(filename, "results/ufreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
 		}
 		out = fopen( filename, "a");
-		fprintf(out,"%.5f\t%.20f\t%.20f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1],o_par[3],o_par[4]);
+		fprintf(out,"%.5f\t%.20f\t%.20f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1],o_par[2],o_par[3]);
 		fclose(out);
 }
 
