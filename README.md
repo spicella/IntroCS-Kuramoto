@@ -13,7 +13,6 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
   
 ### Issues:
   - Check why K value is scaled!
-  - Why std of imaginary part of order parameter is always 0..?!
 
 ### To say in the report:
   - Chosing coding language --> benchmarks
