@@ -20,11 +20,5 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
   - Organization of workflow, C-->Python in standard part, Python-->C-->Python in bonus part
   - First Euler approach: full hamiltonian, slower, nonetheless used in bonus part
   - Second Euler approach: mean field --> lower computational times --> averaging EVERY results with good enough parameters 
-  - Timescale chosen by "Prog. Theor. Phys. Vol. 77, No.5, May 1987, Progress Letters" ["kuramoto_multidim" in Biblio] + thumb rule, still "naive" Euler is "trustworthy"!
-  - Bonus part: in the first part, complete graph, in the bonus part WS, in past literature ["kuramoto_multidim" in Biblio] nn interaction is studied \$sim$
-$$x=\sqrt{2}$$
-
-
-<script type="text/javascript" async
-
-src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+  - Timescale chosen by "Prog. Theor. Phys. Vol. 77, No.5, May 1987, Progress Letters" ["kuramoto_multidim" in Biblio] + thumb rule, still "naive" Euler is "trustworthy" even if only a first order differences method!
+  - Bonus part: in the first part, complete graph, in the bonus part WS, in past literature ["kuramoto_multidim" in Biblio] nn interaction is studied (parallelism with correspondent graphs) 
