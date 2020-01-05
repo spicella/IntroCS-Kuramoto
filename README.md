@@ -20,4 +20,4 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
   - Organization of workflow, C-->Python in standard part, Python-->C-->Python in bonus part
   - First Euler approach: full hamiltonian, slower, nonetheless used in bonus part
   - Second Euler approach: mean field --> lower computational times --> averaging EVERY results with good enough parameters 
-  - Timescale chosen by "Prog. Theor. Phys. Vol. 77, No.5, May 1987, Progress Letters" + thumb rule, still "naive" Euler is "trustworthy"!
+  - Timescale chosen by "Prog. Theor. Phys. Vol. 77, No.5, May 1987, Progress Letters" ["kuramoto_multidim" in Biblio] + thumb rule, still "naive" Euler is "trustworthy"!
