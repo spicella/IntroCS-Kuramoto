@@ -15,16 +15,16 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 25	 //Number of Kuramoto oscillators
+	#define N 1000	 //Number of Kuramoto oscillators
 	#define n_runs 2 //Number of runs per given K
 	#define dt .01 //Time step
-	#define T 50000 //End of simulation time
+	#define T 10000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
-	#define K0 0.
+	#define K0 4.
 	#define dK .1
 	#define K_max 4. //
 	#define PATH_MAX 1000
@@ -41,8 +41,10 @@
 //Run bools:
 	//check values for initial configurations:
 	bool check_initial = true;
-	//Gaussian distributed frequencies [N(0,1)]
+	//Gaussian distributed natural frequencies [N(0,1)]
 	bool gaussian_frequencies = true;
+	//Gaussian distributed phases [N(0,1)]*turn_angle;
+	bool gaussian_phase_0 = true;
 	//MeanField in ODE
 	bool mean_field = false;
 
@@ -54,6 +56,7 @@ float * ConstVal( float value);
 float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
+float * RandGaussPhase();
 float PeriodicPosition(float angular_pos);
 void EulerStep(float *phases, float *ang_freqs, float *ang_freqs_0, float K, float o_par[]);
 void OrderParam(float *phases, float o_param[]);
@@ -106,9 +109,8 @@ int main(void)
 				printf("\t\tTotal elapsed time =  %.5f seconds\n",check_elapsed);
 				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k+1,(number_k_steps+1)*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
 				printf("_________________________________________________________________\n");
-				//Initialize phases and frequencies
-				phases = RandUnifPhase(); 
-				//phases = ConstVal(0); 
+				
+		/////////Initialize phases and frequencies/////////
 				if(gaussian_frequencies==true){
 					ang_freqs = RandGauss();
 					ang_freqs_0 = ang_freqs;
@@ -117,7 +119,12 @@ int main(void)
 				else{
 					ang_freqs = RandUnifFreq();
 					ang_freqs_0 = ang_freqs;
-
+				}
+				if(gaussian_phase_0==true){
+					phases = RandGaussPhase();;
+				}
+				else{
+					phases = RandUnifPhase();
 				}
 
 				if(check_initial==true){
@@ -140,6 +147,7 @@ int main(void)
 				//exit(0);
 					//----------------------START SINGLE RUN LOOP----------------------//
 							int T_split = (int)(T/5);
+
 							ClearResultsFile(K_run);
 							clock_t begin_single_loop = clock();
 							for(i=0;i<T+1;i++){
@@ -227,15 +235,16 @@ float * RandUnifPhase() {
 }
 
 float * ConstVal( float value ){
+	//Useless, just a simple vector initialization to given value was enough
     static float r[N];
     int i;
-    for ( i = 0; i < N; ++i) {
+    for (i = 0; i < N; ++i) {
 		r[i] = value;
     }
     return r;
 }
 
-float * RandUnifFreq( ){
+float * RandUnifFreq(){
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
@@ -246,7 +255,7 @@ float * RandUnifFreq( ){
     return r;
 }
 
-float * RandGauss(  ){
+float * RandGauss(){
 	/*https://www.doc.ic.ac.uk/~wl/papers/07/csur07dt.pdf for gaussian array generation*/
 	/*Box-Muller transform*/
     static float r[N];
@@ -260,6 +269,24 @@ float * RandGauss(  ){
       	phase = U2 * turn_angle;
       	r[2*i] = sqrt_term*cos(phase);
       	r[2*i+1] = sqrt_term*sin(phase);
+    }
+    return r;
+}
+
+float * RandGaussPhase(  ){
+	/*https://www.doc.ic.ac.uk/~wl/papers/07/csur07dt.pdf for gaussian array generation*/
+	/*Box-Muller transform*/
+    static float r[N];
+    float U1,U2,sqrt_term,phase;
+    int i;
+    for ( i = 0; i < N/2; ++i){  //N/2 as this method returns couples of random gaussian distributed numbers
+      	U1 = ((float)rand()/(float)(RAND_MAX));
+      	U2 = ((float)rand()/(float)(RAND_MAX));
+      	
+      	sqrt_term = sqrt(-2*log(U1));
+      	phase = U2 * turn_angle;
+      	r[2*i] = sqrt_term*cos(phase)*turn_angle;
+      	r[2*i+1] = sqrt_term*sin(phase)*turn_angle;
     }
     return r;
 }
@@ -335,9 +362,11 @@ void CreateResultsFolder(){
 }
 
 void ClearResultsFile(float K){
+
 		/*Remove File with the same name, avoid overwriting*/
-		char filename[64];
+		char filename[100];
 		char MF[10];
+		char phase0_name[10];
 		FILE *out;
 		if(mean_field==true){
 			sprintf(MF,"MF");
@@ -345,11 +374,18 @@ void ClearResultsFile(float K){
 		else{
 			sprintf(MF,"NOMF");
 		}
-		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
+		if(gaussian_phase_0==true){
+			sprintf(phase0_name,"gphase");
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
+			sprintf(phase0_name,"unifphase");
+		}
+
+		if(gaussian_frequencies==true){
+			sprintf(filename, "results/gfreq_%s_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", phase0_name, N,MF,T,dt,n_runs,K);
+		}
+		else{
+			sprintf(filename, "results/ufreq_%s_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", phase0_name, N,MF,T,dt,n_runs,K);
 		}		if (remove(filename) == 0) 
       		printf("Deleted successfully"); 
    		else
@@ -384,6 +420,8 @@ void WriteResults(float o_par[], float K, float t_loop){
 		int i;
 		char filename[64];
 		char MF[10];
+		char phase0_name[10];
+
 		FILE *out;
 		if(mean_field==true){
 			sprintf(MF,"MF");
@@ -391,11 +429,18 @@ void WriteResults(float o_par[], float K, float t_loop){
 		else{
 			sprintf(MF,"NOMF");
 		}
-		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
+		if(gaussian_phase_0==true){
+			sprintf(phase0_name,"gphase");
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
+			sprintf(phase0_name,"unifphase");
+		}
+
+		if(gaussian_frequencies==true){
+			sprintf(filename, "results/gfreq_%s_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", phase0_name, N,MF,T,dt,n_runs,K);
+		}
+		else{
+			sprintf(filename, "results/ufreq_%s_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", phase0_name, N,MF,T,dt,n_runs,K);
 		}
 		out = fopen( filename, "a");
 		fprintf(out,"%.5f\t%.20f\t%.20f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1],o_par[2],o_par[3]);
