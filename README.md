@@ -14,7 +14,6 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
   - Plot d(theta)/dt over time to show convergence
   
 ### Issues:
-  - Check why K value is scaled & not converging as expected!
 
 ### To say in the report:
   - Chosing coding language --> benchmarks
