@@ -15,17 +15,17 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 100	 //Number of Kuramoto oscillators
+	#define N 25	 //Number of Kuramoto oscillators
 	#define n_runs 2 //Number of runs per given K
-	#define dt .005 //Time step
-	#define T 10000 //End of simulation time
+	#define dt .01 //Time step
+	#define T 50000 //End of simulation time
 
 //For fixed value of K-s in simulation
 	#define K1 1.
 	#define K2 .1
 //For sweeping of K
 	#define K0 0.
-	#define dK .5
+	#define dK .1
 	#define K_max 4. //
 	#define PATH_MAX 1000
 //For Watts-Strogatz bonus part
@@ -44,7 +44,7 @@
 	//Gaussian distributed frequencies [N(0,1)]
 	bool gaussian_frequencies = true;
 	//MeanField in ODE
-	bool mean_field = true;
+	bool mean_field = false;
 
 
 //-------------------------Functions Declaration-------------------------//
@@ -55,7 +55,7 @@ float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
 float PeriodicPosition(float angular_pos);
-void EulerStep(float *phases, float *ang_freqs, float K, float o_par[]);
+void EulerStep(float *phases, float *ang_freqs, float *ang_freqs_0, float K, float o_par[]);
 void OrderParam(float *phases, float o_param[]);
 void ClearResultsFile(float K);
 float EvaluateMean(float *array, int len_array);
@@ -93,6 +93,7 @@ int main(void)
 		//Declarations
 		float *phases;
 		float *ang_freqs;
+		float *ang_freqs_0; //Natural frequencies of the oscillators
 		float ord_param[T+1][4] = {0};		
 		float ord_param_acc[n_runs][T+1][2] = {0};		
 		//----------------------START MULTIPLE RUNS LOOP----------------------//
@@ -109,10 +110,14 @@ int main(void)
 				phases = RandUnifPhase(); 
 				//phases = ConstVal(0); 
 				if(gaussian_frequencies==true){
-					ang_freqs= RandGauss();
+					ang_freqs = RandGauss();
+					ang_freqs_0 = ang_freqs;
+
 				}
 				else{
-					ang_freqs= RandUnifFreq();
+					ang_freqs = RandUnifFreq();
+					ang_freqs_0 = ang_freqs;
+
 				}
 
 				if(check_initial==true){
@@ -140,7 +145,7 @@ int main(void)
 							for(i=0;i<T+1;i++){
 
 								OrderParam(phases,ord_param_acc[k][i]);
-								EulerStep(phases, ang_freqs, K_run,ord_param_acc[k][i]);
+								EulerStep(phases, ang_freqs, ang_freqs_0, K_run,ord_param_acc[k][i]);
 								
 								if(i%T_split==0){
 									printf("\n\tProcess at %d/100, K=%.4f\n", 100*(int)(i)/T,K_run);
@@ -269,39 +274,33 @@ float PeriodicPosition(float angular_pos){
 	return angular_pos;
 }
 
-void OrderParam(float *phases, float o_par[])
-{
+void OrderParam(float *phases, float o_par[]){
 		int i;
     	double real_ord_param = 0;
     	double imag_ord_param = 0;
     	double iN = 1./((double)N);
-		for(i = 0;i < N; i++)
-		{
+		for(i = 0;i < N; i++){
 			real_ord_param += iN*cos(phases[i]);
 			imag_ord_param += iN*sin(phases[i]);
 		}
-
 		o_par[0] = sqrt(real_ord_param*real_ord_param+imag_ord_param*imag_ord_param); //modulus
  		o_par[1] = 2*atan(imag_ord_param/(o_par[0]+real_ord_param)); //Psi
 }
 
-//Frequency order parameter!
-
-
-void EulerStep(float *phases, float *ang_freqs, float K, float o_par[]){
+void EulerStep(float *phases, float *ang_freqs, float *ang_freqs_0, float K, float o_par[]){
 	// o_par[0] == modulus, o_par[1] == Psi average phase
 	int i,j;
-	float sum_term = 0.;
-	float phase_updated[N] = {0} ; 
-	float frequencies_updated[N] = {0} ; 
 	double iN = 1./((double)N);
   	if(mean_field==true){
 	  	for(i = 0;i < N; i++){	
-	  		ang_freqs[i] +=  K*o_par[0]*sin(o_par[1]-phases[i]);
+	  		ang_freqs[i] =  ang_freqs_0[i] + K*o_par[0]*sin(o_par[1]-phases[i]);
 	  		phases[i] += dt*ang_freqs[i];
 	  	}
   	}
   	else{
+  		float sum_term = 0.;
+		float phase_updated[N] = {0} ; 
+		float frequencies_updated[N] = {0} ; 
   		for(i = 0;i < N; i++){	
 	  		sum_term = 0;
 	  		//Copy initial phase
@@ -309,15 +308,15 @@ void EulerStep(float *phases, float *ang_freqs, float K, float o_par[]){
 	  		//Perform evaluation of additional term
 	  		for(j = 0;j < N; j++)
 	  			{
-	  				sum_term += sin(phases[j]-phases[i]); //check if real sines
+	  				sum_term += sin(phases[j]-phases[i]);
 	  			}
 	  			sum_term = sum_term*K*iN;
-	  		frequencies_updated[i]=ang_freqs[i] + sum_term;
+	  		frequencies_updated[i] = ang_freqs_0[i] + sum_term;
 	  		phase_updated[i] +=  frequencies_updated[i]*dt;
 	  	}
 	  	for(i = 0; i < N;i++)
 	  	{
-	  		phases[i] = PeriodicPosition(phase_updated[i]);
+	  		phases[i] = phase_updated[i];
 	  		ang_freqs[i] = frequencies_updated[i];
 	  	}
 	}
