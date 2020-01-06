@@ -10,6 +10,7 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
 ### Ideas:
   - Average of Fourier analysis for different K-s in order to relate coupling strenght to characteristic oscillations of the Kuramoto systems 
   - Proof of theoretical questions with low N calculations validated by simulation
+  - Plot d(theta)/dt over time to show convergence
   
 ### Issues:
   - Check why K value is scaled!
