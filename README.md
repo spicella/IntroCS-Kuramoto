@@ -5,6 +5,7 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
 
 ### To do:
   - Implement Python pipeline for plots
+  - Add in output from C average+std of both phase and frequency, over multiple runs: std will be indicative of the syncronization and will scale with 1/OrderParameter
   - Create a separated C file for bonus part
 
 ### Ideas:
