@@ -16,17 +16,14 @@
 	#define turn_angle  2.*M_PI
 //Main parameters
 	#define N 1000	 //Number of Kuramoto oscillators
-	#define n_runs 2 //Number of runs per given K
+	#define n_runs 5 //Number of runs per given K
 	#define dt .01 //Time step
-	#define T 10000 //End of simulation time
+	#define T 20000 //End of simulation time
 
-//For fixed value of K-s in simulation
-	#define K1 1.
-	#define K2 .1
 //For sweeping of K
-	#define K0 4.
-	#define dK .1
-	#define K_max 4. //
+	#define K0 3.
+	#define dK .2
+	#define K_max 8. //
 	#define PATH_MAX 1000
 //For Watts-Strogatz bonus part
 	#define r_WS  4 //(already x2)
@@ -44,9 +41,9 @@
 	//Gaussian distributed natural frequencies [N(0,1)]
 	bool gaussian_frequencies = true;
 	//Gaussian distributed phases [N(0,1)]*turn_angle;
-	bool gaussian_phase_0 = true;
+	bool gaussian_phase_0 = false;
 	//MeanField in ODE
-	bool mean_field = false;
+	bool mean_field = true;
 
 
 //-------------------------Functions Declaration-------------------------//
@@ -56,10 +53,9 @@ float * ConstVal( float value);
 float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
-float * RandGaussPhase();
 float PeriodicPosition(float angular_pos);
-void EulerStep(float *phases, float *ang_freqs, float *ang_freqs_0, float K, float o_par[]);
-void OrderParam(float *phases, float o_param[]);
+void EulerStep(float *phases, float *ang_freqs_0, float K, float o_par[]);
+float* ExtractFreqs(float *vec1, float *vec2);void OrderParam(float *phases, float o_param[]);
 void ClearResultsFile(float K);
 float EvaluateMean(float *array, int len_array);
 float EvaluateStd(float *array, int len_array, float mean);
@@ -96,7 +92,9 @@ int main(void)
 		//Declarations
 		float *phases;
 		float *ang_freqs;
+		float *dummy_phases; //Just for extracting ang_freqs
 		float *ang_freqs_0; //Natural frequencies of the oscillators
+		//ADD ACCUMULATORS FOR PHASES AND ANG FREQS SO THAT AVG AND STD CAN BE DERIVED, check eu_test.c
 		float ord_param[T+1][4] = {0};		
 		float ord_param_acc[n_runs][T+1][2] = {0};		
 		//----------------------START MULTIPLE RUNS LOOP----------------------//
@@ -153,7 +151,7 @@ int main(void)
 							for(i=0;i<T+1;i++){
 
 								OrderParam(phases,ord_param_acc[k][i]);
-								EulerStep(phases, ang_freqs, ang_freqs_0, K_run,ord_param_acc[k][i]);
+								EulerStep(phases, ang_freqs_0, K_run,ord_param_acc[k][i]);
 								
 								if(i%T_split==0){
 									printf("\n\tProcess at %d/100, K=%.4f\n", 100*(int)(i)/T,K_run);
@@ -218,12 +216,14 @@ void PrintParams(float K_run){
 	printf("\t K = %.4f\n",K_run);
 	printf("\t dK = %.4f\n",dK);
 	printf("\t End K = %.2f\n",K_max);
+	printf("\n\t MeanField EulerStep? = %s\n", mean_field ? "True!" : "False!");
 	printf("\n\t Gaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
+	printf("\n\t Gaussian initial phases? = %s\n", gaussian_phase_0 ? "True!" : "False!");
 	printf("\t Check initial conditions? = %s\n\n", check_initial ? "True!" : "False!");
 	printf("//----------------------------------------------------------------//\n\n\n");
 }
 
-float * RandUnifPhase() {
+float * RandUnifPhase() { 
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
@@ -233,6 +233,7 @@ float * RandUnifPhase() {
 	    	}
     return r;
 }
+
 
 float * ConstVal( float value ){
 	//Useless, just a simple vector initialization to given value was enough
@@ -244,7 +245,7 @@ float * ConstVal( float value ){
     return r;
 }
 
-float * RandUnifFreq(){
+float * RandUnifFreq(){ 
 	/* Generate array uniformly distributed of float random variables*/
     static float r[N];
     int i;
@@ -255,7 +256,7 @@ float * RandUnifFreq(){
     return r;
 }
 
-float * RandGauss(){
+float * RandGauss(){ 
 	/*https://www.doc.ic.ac.uk/~wl/papers/07/csur07dt.pdf for gaussian array generation*/
 	/*Box-Muller transform*/
     static float r[N];
@@ -273,23 +274,6 @@ float * RandGauss(){
     return r;
 }
 
-float * RandGaussPhase(  ){
-	/*https://www.doc.ic.ac.uk/~wl/papers/07/csur07dt.pdf for gaussian array generation*/
-	/*Box-Muller transform*/
-    static float r[N];
-    float U1,U2,sqrt_term,phase;
-    int i;
-    for ( i = 0; i < N/2; ++i){  //N/2 as this method returns couples of random gaussian distributed numbers
-      	U1 = ((float)rand()/(float)(RAND_MAX));
-      	U2 = ((float)rand()/(float)(RAND_MAX));
-      	
-      	sqrt_term = sqrt(-2*log(U1));
-      	phase = U2 * turn_angle;
-      	r[2*i] = sqrt_term*cos(phase)*turn_angle;
-      	r[2*i+1] = sqrt_term*sin(phase)*turn_angle;
-    }
-    return r;
-}
 
 float PeriodicPosition(float angular_pos){
 	if (angular_pos>turn_angle){
@@ -314,39 +298,27 @@ void OrderParam(float *phases, float o_par[]){
  		o_par[1] = 2*atan(imag_ord_param/(o_par[0]+real_ord_param)); //Psi
 }
 
-void EulerStep(float *phases, float *ang_freqs, float *ang_freqs_0, float K, float o_par[]){
-	// o_par[0] == modulus, o_par[1] == Psi average phase
+void EulerStep(float *phases, float *ang_freqs_0, float K, float o_par[]){
+	// o_par[0] == modulus, o_par[1] == Psi 
 	int i,j;
 	double iN = 1./((double)N);
-  	if(mean_field==true){
+  	if(mean_field==false){ //standard mutual interaction
 	  	for(i = 0;i < N; i++){	
-	  		ang_freqs[i] =  ang_freqs_0[i] + K*o_par[0]*sin(o_par[1]-phases[i]);
-	  		phases[i] += dt*ang_freqs[i];
+	  		phases[i] = phases[i] + dt * ang_freqs_0[i];
+	  		for(int j = 0; j < N; j++){
+	        	phases[i] += dt * K * iN * sin(phases[j]-phases[i]);
+	    	}
 	  	}
   	}
   	else{
-  		float sum_term = 0.;
-		float phase_updated[N] = {0} ; 
-		float frequencies_updated[N] = {0} ; 
-  		for(i = 0;i < N; i++){	
-	  		sum_term = 0;
-	  		//Copy initial phase
-	  		phase_updated[i] = phases[i];
-	  		//Perform evaluation of additional term
-	  		for(j = 0;j < N; j++)
-	  			{
-	  				sum_term += sin(phases[j]-phases[i]);
-	  			}
-	  			sum_term = sum_term*K*iN;
-	  		frequencies_updated[i] = ang_freqs_0[i] + sum_term;
-	  		phase_updated[i] +=  frequencies_updated[i]*dt;
+  		float interaction_term;
+	  	for(i = 0;i < N; i++){	
+	  		//Evaluate interactions
+	  		interaction_term = K*o_par[0]*sin(o_par[1]-phases[i]);
+	  		//Update phases
+	  		phases[i] += (ang_freqs_0[i] + interaction_term)*dt;
 	  	}
-	  	for(i = 0; i < N;i++)
-	  	{
-	  		phases[i] = phase_updated[i];
-	  		ang_freqs[i] = frequencies_updated[i];
-	  	}
-	}
+  	}
 }
 
 void CreateResultsFolder(){
@@ -378,7 +350,7 @@ void ClearResultsFile(float K){
 			sprintf(phase0_name,"gphase");
 		}
 		else{
-			sprintf(phase0_name,"unifphase");
+			sprintf(phase0_name,"uphase");
 		}
 
 		if(gaussian_frequencies==true){
@@ -418,7 +390,7 @@ float EvaluateStd(float *array, int len_array, float mean){
 void WriteResults(float o_par[], float K, float t_loop){
 		/*Single shot writing of order param and freq order param (both real and complex)*/
 		int i;
-		char filename[64];
+		char filename[100];
 		char MF[10];
 		char phase0_name[10];
 
@@ -433,7 +405,7 @@ void WriteResults(float o_par[], float K, float t_loop){
 			sprintf(phase0_name,"gphase");
 		}
 		else{
-			sprintf(phase0_name,"unifphase");
+			sprintf(phase0_name,"uphase");
 		}
 
 		if(gaussian_frequencies==true){
@@ -497,6 +469,16 @@ struct adj_edges read_adj_netw(float p){
     return edges;
 }
 
+float* ExtractFreqs(float *vec1, float *vec2){
+	//Used together with dummy_phases to extract frequencies at each time step
+	int i;
+    static float result[N];
+	for (int i = 0; i < N; ++i)
+	{
+		result[i] = (vec1[i]-vec2[i])/dt;
+	}
+	return result;
+}
     //CODE FOR READING FROM FILE AND SAVING ARRAY OF EDGES MAP FOR DIFFERENT P VALUES
  //    int i,k;
  //    struct adj_edges edges[sizeof(p_list)/sizeof(p_list[0])]; //for each of the p simulated
