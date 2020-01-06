@@ -15,8 +15,8 @@
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
 //Main parameters
-	#define N 250	 //Number of Kuramoto oscillators
-	#define n_runs 10 //Number of runs per given K
+	#define N 100	 //Number of Kuramoto oscillators
+	#define n_runs 2 //Number of runs per given K
 	#define dt .005 //Time step
 	#define T 10000 //End of simulation time
 
@@ -25,8 +25,8 @@
 	#define K2 .1
 //For sweeping of K
 	#define K0 0.
-	#define dK .1
-	#define K_max 2. //
+	#define dK .5
+	#define K_max 4. //
 	#define PATH_MAX 1000
 //For Watts-Strogatz bonus part
 	#define r_WS  4 //(already x2)
@@ -42,9 +42,10 @@
 	//check values for initial configurations:
 	bool check_initial = true;
 	//Gaussian distributed frequencies [N(0,1)]
-	bool gaussian_frequencies = false;
-	//ODE + sweeping K
-	bool sweeping_K = false;
+	bool gaussian_frequencies = true;
+	//MeanField in ODE
+	bool mean_field = true;
+
 
 //-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
@@ -105,8 +106,8 @@ int main(void)
 				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k+1,(number_k_steps+1)*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
 				printf("_________________________________________________________________\n");
 				//Initialize phases and frequencies
-				//phases = RandUnifPhase(); 
-				phases = ConstVal(0); 
+				phases = RandUnifPhase(); 
+				//phases = ConstVal(0); 
 				if(gaussian_frequencies==true){
 					ang_freqs= RandGauss();
 				}
@@ -288,14 +289,38 @@ void OrderParam(float *phases, float o_par[])
 
 
 void EulerStep(float *phases, float *ang_freqs, float K, float o_par[]){
-	int i;
+	// o_par[0] == modulus, o_par[1] == Psi average phase
+	int i,j;
+	float sum_term = 0.;
+	float phase_updated[N] = {0} ; 
+	float frequencies_updated[N] = {0} ; 
 	double iN = 1./((double)N);
-  	for(i = 0;i < N; i++)
-  	{	
-  		ang_freqs[i] +=  K*o_par[0]*sin(o_par[1]-phases[i]);
-  		phases[i] += dt*ang_freqs[i];
-  		//phases[i] = PeriodicPosition(phases[i]); //Not needed: still reads from radians..
+  	if(mean_field==true){
+	  	for(i = 0;i < N; i++){	
+	  		ang_freqs[i] +=  K*o_par[0]*sin(o_par[1]-phases[i]);
+	  		phases[i] += dt*ang_freqs[i];
+	  	}
   	}
+  	else{
+  		for(i = 0;i < N; i++){	
+	  		sum_term = 0;
+	  		//Copy initial phase
+	  		phase_updated[i] = phases[i];
+	  		//Perform evaluation of additional term
+	  		for(j = 0;j < N; j++)
+	  			{
+	  				sum_term += sin(phases[j]-phases[i]); //check if real sines
+	  			}
+	  			sum_term = sum_term*K*iN;
+	  		frequencies_updated[i]=ang_freqs[i] + sum_term;
+	  		phase_updated[i] +=  frequencies_updated[i]*dt;
+	  	}
+	  	for(i = 0; i < N;i++)
+	  	{
+	  		phases[i] = PeriodicPosition(phase_updated[i]);
+	  		ang_freqs[i] = frequencies_updated[i];
+	  	}
+	}
 }
 
 void CreateResultsFolder(){
@@ -313,12 +338,19 @@ void CreateResultsFolder(){
 void ClearResultsFile(float K){
 		/*Remove File with the same name, avoid overwriting*/
 		char filename[64];
+		char MF[10];
 		FILE *out;
-		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
+		if(mean_field==true){
+			sprintf(MF,"MF");
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
+			sprintf(MF,"NOMF");
+		}
+		if(gaussian_frequencies==true){
+			sprintf(filename, "results/gfreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
+		}
+		else{
+			sprintf(filename, "results/ufreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
 		}		if (remove(filename) == 0) 
       		printf("Deleted successfully"); 
    		else
@@ -352,12 +384,19 @@ void WriteResults(float o_par[], float K, float t_loop){
 		/*Single shot writing of order param and freq order param (both real and complex)*/
 		int i;
 		char filename[64];
+		char MF[10];
 		FILE *out;
-		if(gaussian_frequencies==true){
-			sprintf(filename, "results/gfreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
+		if(mean_field==true){
+			sprintf(MF,"MF");
 		}
 		else{
-			sprintf(filename, "results/ufreq_N%d_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,T,dt,n_runs,K);
+			sprintf(MF,"NOMF");
+		}
+		if(gaussian_frequencies==true){
+			sprintf(filename, "results/gfreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
+		}
+		else{
+			sprintf(filename, "results/ufreq_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", N,MF,T,dt,n_runs,K);
 		}
 		out = fopen( filename, "a");
 		fprintf(out,"%.5f\t%.20f\t%.20f\t%.20f\t%.20f\n",t_loop*dt, o_par[0],o_par[1],o_par[2],o_par[3]);
