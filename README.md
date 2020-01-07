@@ -17,6 +17,7 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
 
 ### To say in the report:
   - Chosing coding language --> benchmarks
+  - Gaussian generator-->Box-Muller
   - Organization of workflow, C-->Python in standard part, Python-->C-->Python in bonus part
   - First Euler approach: full hamiltonian, slower, nonetheless used in bonus part
   - Second Euler approach: mean field --> lower computational times --> averaging EVERY results with good enough parameters 
