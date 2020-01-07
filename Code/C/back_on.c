@@ -14,17 +14,21 @@
 
 //-------------------------Begin Definitions-------------------------//
 	#define turn_angle  2.*M_PI
-//Main parameters
-	#define N 1000	 //Number of Kuramoto oscillators
-	#define n_runs 5 //Number of runs per given K
-	#define dt .01 //Time step
-	#define T 20000 //End of simulation time
-
-//For sweeping of K
-	#define K0 3.
-	#define dK .2
-	#define K_max 8. //
 	#define PATH_MAX 1000
+//Main parameters
+	#define N 5000	 //Number of Kuramoto oscillators
+	#define n_runs 20 //Number of runs per given K
+	#define dt .01 //Time step
+	#define T 10000 //End of simulation time
+//For sweeping of K
+	#define len_K_list 74
+	float K_list[] = {0.  , 0.2 , 0.4 , 0.6 , 0.8 , 1.  , 1.2 , 1.4 , 1.41, 1.42, 1.43,
+       1.44, 1.45, 1.46, 1.47, 1.48, 1.49, 1.5 , 1.51, 1.52, 1.53, 1.54,
+       1.55, 1.56, 1.57, 1.58, 1.59, 1.6 , 1.61, 1.62, 1.63, 1.64, 1.65,
+       1.66, 1.67, 1.68, 1.69, 1.7 , 1.71, 1.72, 1.73, 1.74, 1.75, 1.76,
+       1.77, 1.78, 1.79, 1.8 , 1.81, 1.82, 1.83, 1.84, 1.85, 1.86, 1.87,
+       1.88, 1.89, 1.9 , 1.91, 1.92, 1.93, 1.94, 1.95, 1.96, 1.97, 1.98,
+       1.99, 2.  , 2.5 , 3.  , 3.5 , 4.  , 4.5 , 5.  }; 
 //For Watts-Strogatz bonus part
 	#define r_WS  4 //(already x2)
 	struct adj_edges{
@@ -33,6 +37,7 @@
 		int dist_deg[N*r_WS];
 	};
 	float p_list[] = {0.00,0.30,0.5,1.00}; 
+
 //---------------------------End Definitions-------------------------//
 
 //Run bools:
@@ -40,11 +45,8 @@
 	bool check_initial = true;
 	//Gaussian distributed natural frequencies [N(0,1)]
 	bool gaussian_frequencies = true;
-	//Gaussian distributed phases [N(0,1)]*turn_angle;
-	bool gaussian_phase_0 = false;
 	//MeanField in ODE
 	bool mean_field = true;
-
 
 //-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
@@ -53,6 +55,7 @@ float * ConstVal( float value);
 float * RandUnifPhase();
 float * RandUnifFreq();
 float * RandGauss();
+void CopyArray(float *from, float *to);
 float PeriodicPosition(float angular_pos);
 void EulerStep(float *phases, float *ang_freqs_0, float K, float o_par[]);
 float* ExtractFreqs(float *vec1, float *vec2);void OrderParam(float *phases, float o_param[]);
@@ -70,6 +73,11 @@ float iN=(float)(1/N);
 
 int main(void)    
 {	
+	// float *from_test;
+	// from_test = RandGauss();
+	// float to_test[N]={0};
+	// CopyArray(from_test,to_test);
+	// exit(0);
 	clock_t begin_main = clock();
 	srand(time(NULL));
 	sleep(0);
@@ -78,15 +86,13 @@ int main(void)
 	int i,j,k;  //i loops over time, j loops over K values, k loops over runs
 	float complex iN = (float)(1/N)+I*0; //inverse of N
 
-	float K_range = K_max - K0;
-	int number_k_steps = K_range/dK;
 
 	//--------------------START K LOOP--------------------//
-	for(j=0;j<number_k_steps+1;j++)
+	for(j=0;j<len_K_list;j++)
 	{
 		clock_t begin_k_loop = clock();
 
-		float K_run = K0+j*dK;
+		float K_run = K_list[j];
 		PrintParams(K_run);
 
 		//Declarations
@@ -95,36 +101,35 @@ int main(void)
 		float *dummy_phases; //Just for extracting ang_freqs
 		float *ang_freqs_0; //Natural frequencies of the oscillators
 		//ADD ACCUMULATORS FOR PHASES AND ANG FREQS SO THAT AVG AND STD CAN BE DERIVED, check eu_test.c
+		
 		float ord_param[T+1][4] = {0};		
 		float ord_param_acc[n_runs][T+1][2] = {0};		
+		
+		//Too large to keep one whole matrix: avg and std will be evaluated at each time step and then averaged on different runs
+		//double phase_acc[n_runs][(T+1)/500][N] = {0};
 		//----------------------START MULTIPLE RUNS LOOP----------------------//
 			for(k=0;k<n_runs;k++){
 				clock_t check_elapsed_time = clock();
 				double check_elapsed = (double)(check_elapsed_time - begin_main) / CLOCKS_PER_SEC;
 			
 				printf("_________________________________________________________________\n\n");
-				printf("\t\tK = %.4f (%d/%d), RUN %d/%d, \n",K_run,j+1,number_k_steps,k+1,n_runs);
+				printf("\t\tK = %.4f (%d/%d), RUN %d/%d, \n",K_run,j+1,len_K_list,k+1,n_runs);
 				printf("\t\tTotal elapsed time =  %.5f seconds\n",check_elapsed);
-				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k+1,(number_k_steps+1)*n_runs,((float)(j*n_runs+k))/((float)(number_k_steps*n_runs)));
+				printf("\t\tTotal Progress = %d/%d (%.6f/100) \n",j*n_runs+k+1,(len_K_list+1)*n_runs,((float)(j*n_runs+k))/((float)(len_K_list*n_runs)));
 				printf("_________________________________________________________________\n");
 				
 		/////////Initialize phases and frequencies/////////
 				if(gaussian_frequencies==true){
 					ang_freqs = RandGauss();
 					ang_freqs_0 = ang_freqs;
-
 				}
 				else{
 					ang_freqs = RandUnifFreq();
 					ang_freqs_0 = ang_freqs;
 				}
-				if(gaussian_phase_0==true){
-					phases = RandGaussPhase();;
-				}
-				else{
-					phases = RandUnifPhase();
-				}
-
+				
+				phases = RandUnifPhase();				
+				
 				if(check_initial==true){
 					float mean_phases = 0;
 					float std_phases = 0;		
@@ -149,10 +154,9 @@ int main(void)
 							ClearResultsFile(K_run);
 							clock_t begin_single_loop = clock();
 							for(i=0;i<T+1;i++){
-
 								OrderParam(phases,ord_param_acc[k][i]);
 								EulerStep(phases, ang_freqs_0, K_run,ord_param_acc[k][i]);
-								
+								//CopyArray(phases,phases);
 								if(i%T_split==0){
 									printf("\n\tProcess at %d/100, K=%.4f\n", 100*(int)(i)/T,K_run);
 									printf("\tOrderParameter Modulus = %.5f\n",ord_param_acc[k][i][0]);
@@ -206,19 +210,25 @@ int main(void)
 
 //-----------------------------------Function implementations-----------------------------------//
 
+void CopyArray(float *from, float *to){
+	int i;
+	for(int i = 0; i < N; ++i){
+		printf("Step %d:",i);
+		to[i] = from[i];
+		printf("Value %.3f\n",to[i]);
+
+	}
+}
+
 void PrintParams(float K_run){
 	printf("\n\n\n//------------------------Input parameters------------------------//\n");
 	printf("\n\t Number of Oscillators = %d\n",N);
 	printf("\t Runtime simulation = %d\n",T);
 	printf("\t dt = %.5f\n",dt);
 	printf("\t n_runs_per_K = %d\n",n_runs);
-	printf("\n\t Start K = %.2f\n",K0);
 	printf("\t K = %.4f\n",K_run);
-	printf("\t dK = %.4f\n",dK);
-	printf("\t End K = %.2f\n",K_max);
 	printf("\n\t MeanField EulerStep? = %s\n", mean_field ? "True!" : "False!");
 	printf("\n\t Gaussian initial frequencies? = %s\n", gaussian_frequencies ? "True!" : "False!");
-	printf("\n\t Gaussian initial phases? = %s\n", gaussian_phase_0 ? "True!" : "False!");
 	printf("\t Check initial conditions? = %s\n\n", check_initial ? "True!" : "False!");
 	printf("//----------------------------------------------------------------//\n\n\n");
 }
@@ -346,12 +356,7 @@ void ClearResultsFile(float K){
 		else{
 			sprintf(MF,"NOMF");
 		}
-		if(gaussian_phase_0==true){
-			sprintf(phase0_name,"gphase");
-		}
-		else{
-			sprintf(phase0_name,"uphase");
-		}
+		sprintf(phase0_name,"uphase");
 
 		if(gaussian_frequencies==true){
 			sprintf(filename, "results/gfreq_%s_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", phase0_name, N,MF,T,dt,n_runs,K);
@@ -401,13 +406,8 @@ void WriteResults(float o_par[], float K, float t_loop){
 		else{
 			sprintf(MF,"NOMF");
 		}
-		if(gaussian_phase_0==true){
-			sprintf(phase0_name,"gphase");
-		}
-		else{
-			sprintf(phase0_name,"uphase");
-		}
-
+		sprintf(phase0_name,"uphase");
+		
 		if(gaussian_frequencies==true){
 			sprintf(filename, "results/gfreq_%s_N%d_%s_T%d_dt%.4f_nruns%d_K%.3f.tsv", phase0_name, N,MF,T,dt,n_runs,K);
 		}
