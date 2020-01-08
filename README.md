@@ -1,5 +1,3 @@
-[Jupyter notebook code proportion is biased by notebook encoding in Git!]
-
 ![alt text](https://sites.lsa.umich.edu/ksmoore/wp-content/uploads/sites/630/2018/06/TacomaNarrows.jpg)
 
 # Intro_to_ComplexSystems-Kuramoto
