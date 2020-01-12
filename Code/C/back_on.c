@@ -16,29 +16,13 @@
 	#define turn_angle  2.*M_PI
 	#define PATH_MAX 1000
 //Main parameters
-	#define N 5000	 //Number of Kuramoto oscillators
+	#define N 1000	 //Number of Kuramoto oscillators
 	#define n_runs 20 //Number of runs per given K
 	#define dt .01 //Time step
 	#define T 10000 //End of simulation time
 //For sweeping of K
-	#define len_K_list 83
-	float K_list[] = {0.  , 0.05, 0.1 , 0.15, 0.2 , 0.21, 0.22, 0.23, 0.24, 0.25, 0.26,
-       0.27, 0.28, 0.29, 0.3 , 0.31, 0.32, 0.33, 0.34, 0.35, 0.36, 0.37,
-       0.38, 0.39, 0.4 , 0.41, 0.42, 0.43, 0.44, 0.45, 0.46, 0.47, 0.48,
-       0.49, 0.5 , 0.51, 0.52, 0.53, 0.54, 0.55, 0.56, 0.57, 0.58, 0.59,
-       0.6 , 0.61, 0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7 ,
-       0.71, 0.72, 0.73, 0.74, 0.75, 0.76, 0.77, 0.78, 0.79, 0.8 , 0.8 ,
-       0.81, 0.9 , 1.  , 1.1 , 1.2 , 1.3 , 1.4 , 1.5 , 1.6 , 1.7 , 1.8 ,
-       1.9 , 2.  , 2.1 , 2.2 , 2.3 , 2.4}; 
-
-//For Watts-Strogatz bonus part
-	#define r_WS  4 //(already x2)
-	struct adj_edges{
-		int from [N*r_WS];
-		int to [N*r_WS];
-		int dist_deg[N*r_WS];
-	};
-	float p_list[] = {0.00,0.30,0.5,1.00}; 
+	#define len_K_list 2
+	float K_list[] = {1,2}; 
 
 //---------------------------End Definitions-------------------------//
 
@@ -46,11 +30,11 @@
 	//check values for initial configurations:
 	bool check_initial = true;
 	//Gaussian distributed natural frequencies [N(0,1)]
-	bool gaussian_frequencies = false;
+	bool gaussian_frequencies = true;
 	//Gamma for UnifDistrib of natural freqs:
-	#define gamma 5.00
+	#define gamma 10.00
 	//MeanField in ODE
-	bool mean_field = true;
+	bool mean_field = false;
 
 //-------------------------Functions Declaration-------------------------//
 void CreateResultsFolder();
@@ -316,10 +300,11 @@ void OrderParam(float *phases, float o_par[]){
 }
 
 void EulerStep(float *phases, float *ang_freqs_0, float K, float o_par[]){
+	//o_par = Order Parameters, ang_freqs_0 = Natural frequencies
 	// o_par[0] == modulus, o_par[1] == Psi 
 	int i,j;
 	double iN = 1./((double)N);
-  	if(mean_field==false){ //standard mutual interaction
+  	if(mean_field==false){ //Mutual interaction
 	  	for(i = 0;i < N; i++){	
 	  		phases[i] = phases[i] + dt * ang_freqs_0[i];
 	  		for(int j = 0; j < N; j++){
@@ -327,7 +312,7 @@ void EulerStep(float *phases, float *ang_freqs_0, float K, float o_par[]){
 	    	}
 	  	}
   	}
-  	else{
+  	else{ //Mean field
   		float interaction_term;
 	  	for(i = 0;i < N; i++){	
 	  		//Evaluate interactions
@@ -500,15 +485,3 @@ float* ExtractFreqs(float *vec1, float *vec2){
 	}
 	return result;
 }
-    //CODE FOR READING FROM FILE AND SAVING ARRAY OF EDGES MAP FOR DIFFERENT P VALUES
- //    int i,k;
- //    struct adj_edges edges[sizeof(p_list)/sizeof(p_list[0])]; //for each of the p simulated
- 	
- // 	for(k=0; k<sizeof(p_list)/sizeof(p_list[0]-1);k++)	//k loop, for each of the p value analyzed, up to cardinality of p_list
- // 	{
- // 		edges[k]=read_adj_netw(p_list[k]);
- // 		//for(i=0; i<N*r;i++)	//i loop, for each edge
- // 		//	{
- // 		//		printf("%d-->%d\n",edges[k].from[i],edges[k].to[i]);
- // 		//	}
-	// }
