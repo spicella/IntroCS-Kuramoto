@@ -24,15 +24,6 @@
 	#define len_K_list 1
 	float K_list[] = {1}; 
 
-//For Watts-Strogatz bonus part
-	#define r_WS  4 //(already x2)
-	struct adj_edges{
-		int from [N*r_WS];
-		int to [N*r_WS];
-		int dist_deg[N*r_WS];
-	};
-	float p_list[] = {0.00,0.30,0.5,1.00}; 
-
 //---------------------------End Definitions-------------------------//
 
 //Run bools:
@@ -558,19 +549,3 @@ float* ExtractFreqs(float *vec1, float *vec2){
 	}
 	return result;
 }
-    //CODE FOR READING FROM FILE AND SAVING ARRAY OF EDGES MAP FOR DIFFERENT P VALUES
- //    int i,k;
- //    struct adj_edges edges[sizeof(p_list)/sizeof(p_list[0])]; //for each of the p simulated
- 	
- // 	for(k=0; k<sizeof(p_list)/sizeof(p_list[0]-1);k++)	//k loop, for each of the p value analyzed, up to cardinality of p_list
- // 	{
- // 		edges[k]=read_adj_netw(p_list[k]);
- // 		//for(i=0; i<N*r;i++)	//i loop, for each edge
- // 		//	{
- // 		//		printf("%d-->%d\n",edges[k].from[i],edges[k].to[i]);
- // 		//	}
-	// }
-
-
-
-
