@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[47]:
+# In[9]:
 
 
 import pandas as pd
@@ -13,7 +13,7 @@ plt.style.use("seaborn-darkgrid")
 import os
 
 
-# In[222]:
+# In[16]:
 
 
 def coordinates_on_circle(n):
@@ -60,7 +60,7 @@ def create_starting_graph(n,r):
 
 def create_strogatz(n, r ,p, place_labels=False ):
     """Plots the graph of the Strogatz model on a unit circle."""
-    
+    print("Creating WS graph for p=%.2f"%(p))
     #Procedure to create results folder automatically
     path = os.getcwd()
     results_dir = "/results_WS" 
@@ -82,48 +82,9 @@ def create_strogatz(n, r ,p, place_labels=False ):
         raise Exception("Wrong input: \n p must be in [0,1]")
     coords = coordinates_on_circle(n)
     adj_mat = create_starting_graph(n,r)
-    labels_nodes = []
-    nodes_coords = coordinates_on_circle(n)
-    #figure settings
-    fig, (ax1, ax2) = plt.subplots(1, 2,figsize=(16,9))
-    plt.subplots_adjust(wspace=0.3)
-    plt.suptitle("WS(N=%d; 2r = %d), Starting configuration"%(n,2*r),fontsize=25)
-    #plot graph
-    for i in range(0,n):
-        connections_list = adj_mat[adj_mat.iloc[i] == True].index.tolist()
-    #print(connections_list) 
-        for k in range(0,len(connections_list)):
-            ax1.plot([nodes_coords[0][i],nodes_coords[0][connections_list[k]]],[nodes_coords[1][i],nodes_coords[1][connections_list[k]]],linewidth=.5,color='indianred')
-    ax1.plot(nodes_coords[0],nodes_coords[1],color='steelblue',ls='none',marker='o',markersize=10,label=labels_nodes)
-    ax1.set_title("Graph representation",fontsize=20)
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    #labels on vertices
-    if place_labels==True:
-        for i in range(0,n):
-            labels_nodes.append("%d"%i)
-            ax1.text(nodes_coords[0][i],nodes_coords[1][i],labels_nodes[i],fontsize=15)
-
-            
-    #plot adjacency matrix
-    ax2.set_xlabel("Edges",fontsize=20)
-    ax2.set_ylabel("Vertices",fontsize=20)
-    ax2.matshow(adj_mat,cmap='cividis')
-    ax2.set_title("Adjacency matrix",fontsize=25)
-    
-    #save things!
-    adj_mat.to_csv(path+results_dir+name_csv,header=False, index=False)
-    plt.savefig(path+results_dir+name_plot,dpi=200)
-    plt.show()
-    
-    #print("PRE REWIRING:",sum(adj_mat))
-        
-    #rewiring! (anticlockwise, for sake of indices)
+ 
     
     for i in range(0,n):
-        #print("working on row # %d"%(i))
-        #edge_list = list(adj_mat[adj_mat.iloc[i] == True].index.tolist())
-        #edge_list = [k for k in edge_list if k > i]
         for j in range(0,r):  #for each link to vertex i
 
             if (random.random()<p): #attempt a rewire
@@ -155,42 +116,6 @@ def create_strogatz(n, r ,p, place_labels=False ):
                 
 
 
-    #print("AFTER REWIRING:",sum(adj_mat))
-
-    
-    #Plot rewired
-    
-    fig, (ax1, ax2) = plt.subplots(1, 2,figsize=(16,9))
-    plt.subplots_adjust(wspace=0.3)    
-    plt.suptitle("WS(N=%d; 2r = %d; p = %.3f)"%(n,2*r, p),fontsize=25)
-
-    #plot graph
-    for i in range(0,n):
-        connections_list = adj_mat[adj_mat.iloc[i] == True].index.tolist()
-    #print(connections_list)
-        for k in range(0,len(connections_list)):
-            ax1.plot([nodes_coords[0][i],nodes_coords[0][connections_list[k]]],[nodes_coords[1][i],nodes_coords[1][connections_list[k]]],linewidth=.5,color='indianred')
-    ax1.plot(nodes_coords[0],nodes_coords[1],color='steelblue',ls='none',marker='o',markersize=10,label=labels_nodes)
-    ax1.set_title("Graph representation",fontsize=20)
-    ax1.set_xticks([])
-    ax1.set_yticks([])
-    #labels on vertices
-    if place_labels==True:
-        for i in range(0,n):
-            labels_nodes.append("%d"%i)
-            ax1.text(nodes_coords[0][i],nodes_coords[1][i],labels_nodes[i],fontsize=15)
-
-            
-    #plot adjacency matrix
-    ax2.set_xlabel("Edges",fontsize=20)
-    ax2.set_ylabel("Vertices",fontsize=20)
-    ax2.matshow(adj_mat,cmap='cividis')
-    ax2.set_title("Adjacency matrix",fontsize=25)
-    
-    #save things!
-    adj_mat.to_csv(path+results_dir+name_csv_rewired,header=False, index=False)
-    plt.savefig(path+results_dir+name_plot_rewired,dpi=200)
-    plt.show()
     return adj_mat
 
 def write_extended(adj,p_ext):
@@ -212,23 +137,11 @@ def write_extended(adj,p_ext):
     return result
 
 
-# In[219]:
-
-
 path = os.getcwd()
 results_dir = "/results_WS" 
-n,r=10,2 #insert same values as in C code!
-p1 = np.linspace(0,.2,2)
-p2 = np.linspace(.2,.6,3)
-p3 = np.linspace(.6,1,2)
-p_list = np.unique(np.concatenate([p1,p2,p3])) #insert same values as in C code!
+n,r=2000,2 #insert same values as in C code!
+p_list = [0,0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, .75, 0.8, .85, 0.9,.95,1]
+
 for i in p_list:
     adj_mat = create_strogatz(n,r,i)
     write_extended(adj_mat,i)
-
-
-# In[ ]:
-
-
-write_extended()
-
