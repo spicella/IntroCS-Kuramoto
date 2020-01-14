@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[199]:
-
-
 import os
 from sympy import *
 import pandas as pd
@@ -107,7 +101,7 @@ plt.show()
 
 # ## Read data
 
-# In[8]:
+# In[2]:
 
 
 #Folder and paths definitions
@@ -123,94 +117,40 @@ else:
     print ("Successfully created the directory %s " % results_dir)
 
 
-# In[ ]:
+# In[27]:
 
 
+Kvalues = np.linspace(0,6,30)
+Kvalues = np.around(Kvalues, decimals=3)
 
 
-
-# In[277]:
-
-
-#Simulation parameters
-N = 2000
-T = 20000
-n_runs = 20
-dt = .01
-freq = "gfreq"
-gamma = 10
-MF = "NOMF"
-
-if(freq =="gfreq"):
-    freq_plot="$\\vec{\\omega_{0}} = \\mathcal{N}(0,1)$"
-else:
-    freq_plot="$\\vec{\\omega_{0}} = U(-%.1f,%.1f)$"%(gamma,gamma)
-if(MF =="MF"):
-    MF_plot="MeanField"
-else:
-    MF_plot="non-meanField"
-
-
-# In[278]:
-
-
-#OutputFileNames
-#S/N --> |r(t)|/sigma(r(t))
-sn_name = "S_N"
-#(Mod&Phase)(t)
-modphase_name = "ModPhase_t"
-#(Mod)(t)
-mod_name = "Mod_t"
-#Spectrum
-spectrum_name = "Spectrum"
-#r_inf
-rinf_name = "r_inf"
-#Configuration-specific name
-if(freq!="gfreq"):
-    config_name= "/WS_N%d_nruns%d_freq=%s_gamma=%.2f"%(N,n_runs,freq,gamma)
-else:
-    config_name= "/WS_N%d_nruns%d_freq=%s_"%(N,n_runs,freq)
-
-
-# In[36]:
-
-
-Kvalues = [0.        , 0.17241379, 0.34482759, 0.51724138, 0.68965517,
-       0.86206897, 1.03448276, 1.20689655, 1.37931034, 1.55172414,
-       1.72413793, 1.89655172, 2.06896552, 2.24137931, 2.4137931 ,
-       2.5862069 , 2.75862069, 2.93103448, 3.10344828, 3.27586207,
-       3.44827586, 3.62068966, 3.79310345, 3.96551724, 4.13793103,
-       4.31034483, 4.48275862, 4.65517241, 4.82758621, 5.]
-#Kvalues = [0.000,0.172,0.345,0.517,0.690,0.862,1.034,1.207,1.379,1.552,1.724,1.897,2.069,2.241,2.586,2.759,2.931,3.103,3.276]
-
-
-# In[37]:
+# In[28]:
 
 
 pvalues = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, .95, 1]
 
 
-# In[40]:
+# In[9]:
 
 
 #Create dataframe dictionary. For each entry, first value is the K of the dataframe (second value)
 data = []
 for i in range(0,len(Kvalues)):
     for j in pvalues:
-        filename = datafolder_path + "/WS_gfreq_uphase_N2000_NOMF_T20000_dt0.0100_nruns20_K%.3f_p=%.3f.tsv"%(Kvalues[i],j)
+        filename = datafolder_path + "/WS_gfreq_uphase_N2000_NOMF_T20000_dt0.0100_nruns10_K%.3f_p=%.3f.tsv"%(Kvalues[i],j)
         #cols refers to timestep, avgmod, stdmod, avgphase,stdphase (of order parameter)
         df = pd.read_csv(filename,sep="\t",header=None)
         data.append([Kvalues[i],j,df])
     
 
 
-# In[50]:
+# In[10]:
 
 
 #data[0][x]#, x=0=> K, x=1=>p, x=2=> df 
 
 
-# In[73]:
+# In[11]:
 
 
 def rinf_avg(df):
@@ -222,7 +162,7 @@ def rinf_std(df):
     return np.std(lasts)
 
 
-# In[146]:
+# In[12]:
 
 
 K_plot = []
@@ -237,13 +177,7 @@ for i in range(0,len(data)):
     r_inf_std.append(rinf_std(data[i][2]))
 
 
-# In[ ]:
-
-
-
-
-
-# In[297]:
+# In[29]:
 
 
 r_inf_mat = np.zeros(shape=[len(pvalues),len(Kvalues)])
@@ -255,7 +189,7 @@ ax = plt.gca()
 #name = "Kuramoto oscillators on Watts-Strogatz network \n N = %d, r = %d, dt = %.3f, %s, n_runs = %d\n$r_{\\infty}$"%(N,2,dt,freq_plot, n_runs)
 
 im = plt.imshow(r_inf_mat)
-plt.title("Kuramoto oscillators on Watts-Strogatz network\n N=%d, r=%d, T=%d, dt=%.3f, %s, n_runs=%d\n $r_{\\infty}$"%(N,2,T,dt,freq_plot,n_runs),fontsize=20)
+plt.title("Kuramoto oscillators on Watts-Strogatz network\n N=%d, $r_{WS}$=%d, T=%d, dt=%.3f, %s, n_runs=%d\n $r_{\\infty}$"%(N,3,T,dt,freq_plot,n_runs),fontsize=20)
 
 plt.yticks(np.linspace(0,len(pvalues)-1,len(pvalues)),pvalues)
 plt.ylabel("p",fontsize=18,rotation=0)
@@ -272,19 +206,19 @@ plt.savefig(output_dir+config_name+"WS_rinf_heatmap.png")
 plt.show()
 
 
-# In[183]:
+# In[14]:
 
 
 Kcs_df = pd.DataFrame([p_plot,K_plot,r_inf_avg,r_inf_std]).T
 
 
-# In[293]:
+# In[15]:
 
 
 Kcs_df = Kcs_df.sort_values(by=[0,1])
 
 
-# In[269]:
+# In[31]:
 
 
 Kc_plot = []
@@ -300,30 +234,53 @@ for i in range(0,len(pvalues)):
 Kc_plot = pd.DataFrame(Kc_plot, columns=["p","Kc"])
 
 
-# In[295]:
+# In[54]:
+
+
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+
+# In[55]:
+
+
+def func(x, a, b):
+    return a+ b/x
+
+
+# In[66]:
+
+
+popt, pcov = curve_fit(func, Kc_plot["p"][2:],Kc_plot["Kc"][2:], p0=[1.6,2])
+popt
+
+
+# In[70]:
+
+
+x_fit = np.linspace(Kc_plot["p"][2],1,100)
+y_fit = func(x_fit,popt[0],popt[1])
+
+
+# In[94]:
 
 
 plt.figure(figsize=[14,6])
-plt.grid(True)
-plt.title("Kuramoto oscillators on Watts-Strogatz network\n N=%d, r=%d, T=%d, dt=%.3f, %s, n_runs=%d\n $K_{c}(p)$"%(N,2,T,dt,freq_plot,n_runs),fontsize=20)
-plt.plot(Kc_plot["p"],Kc_plot["Kc"],ls='--',marker='o')
-plt.xticks(np.linspace(0,1,len(pvalues)),pvalues)
+plt.grid(True,alpha=.3)
+plt.title("Kuramoto oscillators on Watts-Strogatz network\n N=%d, $r_{WS}$=%d, T=%d, dt=%.3f, %s, n_runs=%d\n $K_{c}(p)$"%(N,3,T,dt,freq_plot,n_runs),fontsize=20)
+plt.plot(x_fit,y_fit,label="y(p) = a + $\\frac{b}{p}$ fit")
+plt.plot(Kc_plot["p"],Kc_plot["Kc"],c='b',marker='o',markersize=12,ls='',label="Raw Data")
+plt.plot(Kc_plot["p"][2:],Kc_plot["Kc"][2:],c='r',marker='o',markersize=9,ls='--',linewidth=.7,label="Fitted Data")
+plt.xticks(pvalues,pvalues)
 plt.xlabel("p",fontsize=18,rotation=0)
-plt.yticks(np.linspace(0,max(Kvalues),len(Kvalues)),Kvalues)
-plt.ylabel("$K_{c}(p)$",fontsize=18,rotation=0)
-plt.ylim(min(Kc_plot["Kc"]),max(Kc_plot["Kc"])*1.01)
+plt.yticks(Kvalues,Kvalues)
+plt.ylim(min(Kc_plot["Kc"])*.85,max(Kc_plot["Kc"])*1.1)
+plt.legend(fontsize=18)
+
+plt.text(.5,4,"a = %.4f$\pm$%.4f, b = %.4f$\pm$%.4f"%(popt[0],pcov[0,0],popt[1],pcov[1,1]),fontsize=20)
+
 plt.tight_layout()
 plt.savefig(output_dir+config_name+"WS_Kc(p).png")
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
 
 
 
