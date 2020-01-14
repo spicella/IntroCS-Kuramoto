@@ -1,1 +1,1 @@
-Code for generating configurations for bonus part
+Code for generating configurations and results for bonus part
