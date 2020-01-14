@@ -17,26 +17,25 @@
 	#define PATH_MAX 1000
 //Main parameters
 	#define N 2000	 //Number of Kuramoto oscillators
-	#define n_runs 20 //Number of runs per given K
+	#define n_runs 10 //Number of runs per given K
 	#define dt .01 //Time step
 	#define T 20000 //End of simulation time
 //For sweeping of K
 	#define len_K_list 30
-	float K_list[] = {0.        , 0.17241379, 0.34482759, 0.51724138, 0.68965517,
-       0.86206897, 1.03448276, 1.20689655, 1.37931034, 1.55172414,
-       1.72413793, 1.89655172, 2.06896552, 2.24137931, 2.4137931 ,
-       2.5862069 , 2.75862069, 2.93103448, 3.10344828, 3.27586207,
-       3.44827586, 3.62068966, 3.79310345, 3.96551724, 4.13793103,
-       4.31034483, 4.48275862, 4.65517241, 4.82758621, 5.     }; 
+	float K_list[] = { 0.000,0.207,0.414,0.621,0.828,1.034,
+						1.241,1.448,1.655,1.862,2.069,2.276,
+						2.483,2.690,2.897,3.103,3.310,3.517,
+						3.724,3.931,4.138,4.345,4.552,4.759,
+						4.966,5.172,5.379,5.586,5.793,6.000 }; 
 
 //For Watts-Strogatz bonus part
-	#define r_WS  4. //(already x2)
+	#define r_WS  6. //(already x2)
 	struct adj_edges{
 		int from [N*(int)(r_WS)];
 		int to [N*(int)(r_WS)];
 		int dist_deg[N*(int)(r_WS)];
 	};
-	float p_list[] = {0,0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,1}; 
+	float p_list[] = {0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, .95,1};
 
 //---------------------------End Definitions-------------------------//
 
