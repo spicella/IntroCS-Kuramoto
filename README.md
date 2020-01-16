@@ -7,9 +7,10 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
   - a
   - b
 ## How to use the code:
-  1) a
-  2) b
-### To do:
+  1) Simulate your case with the C code using the code in Code/C/core_code.c . Settings for natural frequency distribution, number of runs, T, dt, K list to sample, number of runs per configuration and algorithm for the integration step can be easily controlled used parameters and bool in the first part of the code. The folder for the output result will be automatically created with the output files containing four columns [avg(mod(order parameter)), std(mod(order_parameter)), avg(phase(order_parameter)), std(phase(order_parameter)).
+  
+  
+  2) Use the correspondent Python codes for plotting the results. Python paths are already automatized to read directly the "results" folder generated from C. The code will automatically generate a folder for the output plots.
 
 
 ### Ideas:
