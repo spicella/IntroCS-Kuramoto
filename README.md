@@ -1,11 +1,12 @@
 ![alt text](https://sites.lsa.umich.edu/ksmoore/wp-content/uploads/sites/630/2018/06/TacomaNarrows.jpg)
 
 # KuramotoModel
-Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduction to Complex Systems Course @ Utrecht University, Dec'19-Jan'20. Main simulations will run with a C code, plotting and analysis on Python
+Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduction to Complex Systems Course @ Utrecht University, Dec'19-Jan'20. Main simulations will run with a C code, plotting and analysis on Python.
 
 ## What does the code do:
-  - a
-  - b
+  - Simulation of Kuramoto model [partially optimized code] on fully completed graph, averaged over different runs.
+  - Simulation of single runs of Kuramoto model with fixed initial conditions (either phases or natural frequencies).
+  - Simulation of Kuramoto model on Watts-Strogatz graphs, averaged over different runs.
 ## How to use the code:
   1) Simulate your case with the C code using the code in Code/C/core_code.c . Settings for natural frequency distribution, number of runs, T, dt, K list to sample, number of runs per configuration and algorithm for the integration step can be easily controlled used parameters and bool in the first part of the code. The folder for the output result will be automatically created with the output files containing four columns [avg(mod(order parameter)), std(mod(order_parameter)), avg(phase(order_parameter)), std(phase(order_parameter)).
   
@@ -21,6 +22,7 @@ Spontaneous synchronisation for the Kuramoto model - Assignment for the Introduc
 ### Issues:
 
 ### To say in the report:
+  - Clarify "mean-field" notation
   - Chosing coding language --> benchmarks
   - Gaussian generator-->Box-Muller
   - Selecting K ranges to investigated allowed more specific analysis and saving lot of computational time
